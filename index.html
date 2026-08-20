@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Next360 Organic Products - Office Dashboard</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -531,11 +534,11 @@ function switchTab(tab, btn, panels) {
 function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-    const pass = document.getElementById('loginPassword').value;
+    const pass = document.getElementById('loginPassword').value.trim();
     const user = USERS.find(u => u.email === email && u.password === pass);
     if (!user) {
         const err = document.getElementById('loginError');
-        err.textContent = 'Invalid email or password';
+        err.textContent = 'Invalid email or password. Check case-sensitive password!';
         err.style.display = 'block';
         return;
     }
