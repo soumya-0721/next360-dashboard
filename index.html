@@ -48,6 +48,18 @@
         .btn-xs { padding: 5px 10px; font-size: 11px; }
         .btn-full { width: 100%; justify-content: center; }
         .error-msg { color: var(--danger); font-size: 13px; margin-top: 8px; text-align: center; display: none; }
+        .pass-wrapper { position: relative; }
+        .pass-wrapper input { padding-right: 44px; }
+        .pass-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px; color: var(--text-light); }
+        .quick-login { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .quick-login h4 { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; text-align: center; }
+        .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .quick-btn { padding: 10px 12px; border: 2px solid var(--border); border-radius: 10px; background: white; cursor: pointer; font-family: inherit; font-size: 12px; text-align: left; transition: all 0.2s; }
+        .quick-btn:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-1px); }
+        .quick-btn .q-name { font-weight: 700; font-size: 13px; color: var(--text); }
+        .quick-btn .q-role { font-size: 10px; color: var(--text-light); margin-top: 2px; }
+        .quick-btn .q-role.ceo { color: #7c3aed; }
+        .quick-btn .q-role.cto { color: #2563eb; }
 
         /* Dashboard */
         .dashboard { display: none; min-height: 100vh; }
@@ -285,11 +297,18 @@
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                <div class="pass-wrapper">
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                    <button type="button" class="pass-toggle" onclick="togglePassword()">👁️</button>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary btn-full">Sign In</button>
             <div class="error-msg" id="loginError"></div>
         </form>
+        <div class="quick-login">
+            <h4>⚡ Quick Login</h4>
+            <div class="quick-grid" id="quickLoginGrid"></div>
+        </div>
     </div>
 </div>
 
@@ -564,6 +583,38 @@ function switchTab(tab, btn, panels) {
 }
 
 // ============ LOGIN ============
+function togglePassword() {
+    const input = document.getElementById('loginPassword');
+    const btn = document.querySelector('.pass-toggle');
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        btn.textContent = '👁️';
+    }
+}
+
+function quickLogin(email, password) {
+    document.getElementById('loginEmail').value = email;
+    document.getElementById('loginPassword').value = password;
+    document.getElementById('loginPassword').type = 'text';
+    document.querySelector('.pass-toggle').textContent = '🙈';
+}
+
+function renderQuickLogin() {
+    const users = USERS();
+    const grid = document.getElementById('quickLoginGrid');
+    grid.innerHTML = users.map(u => {
+        const roleClass = u.role === 'CEO' ? 'ceo' : u.role === 'CTO' ? 'cto' : '';
+        const icon = u.role === 'CEO' ? '👑' : u.role === 'CTO' ? '⚙️' : '💼';
+        return `<button type="button" class="quick-btn" onclick="quickLogin('${u.email}', '${u.password}')">
+            <div class="q-name">${icon} ${u.name.split(' ')[0]}</div>
+            <div class="q-role ${roleClass}">${u.role}</div>
+        </button>`;
+    }).join('');
+}
+
 function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim().toLowerCase();
@@ -1111,6 +1162,9 @@ function initBIRTHDAYS() {
 }
 initBIRTHDAYS();
 
+// Render quick login buttons on page load
+document.addEventListener('DOMContentLoaded', function() { renderQuickLogin(); });
+
 function renderBdayWidget() {
     const container = document.getElementById('bdayWidget');
     const now = new Date();
@@ -1384,6 +1438,7 @@ function renderSettings() {
 
 function saveProfile(index) {
     const users = USERS();
+    const oldName = users[index].name;
     const name = document.getElementById('setName_' + index).value.trim();
     const email = document.getElementById('setEmail_' + index).value.trim().toLowerCase();
     const pass = document.getElementById('setPass_' + index).value.trim();
@@ -1392,42 +1447,58 @@ function saveProfile(index) {
     const bDay = parseInt(document.getElementById('setBDay_' + index).value);
     if (!name || !email || !pass) { alert('Name, email and password are required!'); return; }
     if (bDay < 1 || bDay > 31) { alert('Invalid birthday day!'); return; }
-    const oldEmail = users[index].email;
+    // Update user
     users[index] = { name, email, password: pass, role };
     setUsers(users);
+    // Update birthday - remove old, add new
     const bd = getBirthdays();
+    if (oldName !== name) delete bd[oldName];
     bd[name] = { month: bMonth, day: bDay };
-    delete bd[users[index].name];
     setBirthdays(bd);
-    // Update BIRTHDAYS array for widget
     updateBIRTHDAYSFromStorage();
     alert('Profile saved! ✅');
     renderSettings();
 }
 
 function deleteMember(index) {
-    if (!confirm('Remove this team member?')) return;
     const users = USERS();
-    const removed = users.splice(index, 1)[0];
+    const member = users[index];
+    // Prevent CEO from deleting themselves
+    if (member.email === currentUser.email) {
+        alert('You cannot remove yourself!');
+        return;
+    }
+    // Prevent deleting other CEOs
+    if (member.role === 'CEO') {
+        alert('Cannot remove another CEO!');
+        return;
+    }
+    if (!confirm('Remove ' + member.name + ' from the team?')) return;
+    users.splice(index, 1);
     setUsers(users);
     const bd = getBirthdays();
-    delete bd[removed.name];
+    delete bd[member.name];
     setBirthdays(bd);
     updateBIRTHDAYSFromStorage();
-    alert(removed.name + ' removed! ✅');
+    alert(member.name + ' removed! ✅');
     renderSettings();
 }
 
 function addNewMember() {
     const users = USERS();
-    users.push({ name: 'New Member', email: 'newmember@gmail.com', password: 'password123', role: 'Employee' });
+    const newName = 'New Member ' + (users.length + 1);
+    const newEmail = 'member' + (users.length + 1) + '@gmail.com';
+    users.push({ name: newName, email: newEmail, password: 'password123', role: 'Employee' });
     setUsers(users);
     const bd = getBirthdays();
-    bd['New Member'] = { month: 1, day: 1 };
+    bd[newName] = { month: 1, day: 1 };
     setBirthdays(bd);
     updateBIRTHDAYSFromStorage();
     renderSettings();
-    alert('New member added! Edit their details below.');
+    // Scroll to the new card
+    const cards = document.querySelectorAll('.settings-card');
+    if (cards.length) cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    alert('New member added! Edit their details below and click Save.');
 }
 
 function updateBIRTHDAYSFromStorage() {
