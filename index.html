@@ -208,10 +208,27 @@
         .pinned-announce .pin-title { font-size: 12px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
         .pinned-announce .pin-text { font-size: 14px; font-weight: 600; color: #78350f; }
         .pinned-announce .pin-time { font-size: 11px; color: #b45309; margin-top: 4px; }
-        .chat-input-row { display: flex; gap: 8px; }
-        .chat-input-row input { flex: 1; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 14px; outline: none; }
-        .chat-input-row input:focus { border-color: var(--primary); }
+        .chat-input-row { display: flex; gap: 8px; align-items: center; }
+        .chat-input-row input[type='text'] { flex: 1; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 14px; outline: none; }
+        .chat-input-row input[type='text']:focus { border-color: var(--primary); }
         .chat-input-row button { padding: 12px 20px; }
+        .file-btn { background: none; border: 2px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 18px; transition: all 0.2s; }
+        .file-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+        .file-btn input { display: none; }
+        .file-preview { margin-top: 8px; padding: 8px; background: #f9fafb; border-radius: 8px; border: 1px solid var(--border); display: none; }
+        .file-preview.active { display: flex; align-items: center; gap: 8px; }
+        .file-preview img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
+        .file-preview .file-info { font-size: 12px; color: var(--text-light); }
+        .file-preview .file-remove { background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+        .chat-attachment { margin-top: 8px; }
+        .chat-attachment img { max-width: 280px; max-height: 200px; border-radius: 10px; cursor: pointer; border: 1px solid var(--border); }
+        .chat-attachment img:hover { opacity: 0.9; }
+        .chat-attachment .file-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--text); text-decoration: none; cursor: pointer; transition: background 0.2s; }
+        .chat-attachment .file-link:hover { background: var(--primary-light); }
+        .img-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 500; align-items: center; justify-content: center; cursor: pointer; }
+        .img-modal.open { display: flex; }
+        .img-modal img { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .img-modal .close-modal { position: absolute; top: 20px; right: 30px; font-size: 36px; color: white; cursor: pointer; }
 
         @media (max-width: 768px) {
             .topbar { padding: 0 16px; }
@@ -415,13 +432,28 @@
             <div id="pinnedAnnouncements" style="margin-bottom:12px;"></div>
             <div class="chat-container">
                 <div class="chat-messages" id="chatMessages"></div>
+                <div class="file-preview" id="filePreview">
+                    <div id="previewThumb"></div>
+                    <div class="file-info" id="previewInfo"></div>
+                    <button class="file-remove" onclick="removeFile()">✕</button>
+                </div>
                 <div class="chat-input-row">
+                    <label class="file-btn">
+                        📎
+                        <input type="file" id="chatFileInput" accept="image/*,.pdf,.doc,.docx,.txt,.zip" onchange="handleFileSelect(event)">
+                    </label>
                     <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendChat()">
                     <button class="btn btn-primary btn-sm" onclick="sendChat()">Send ✈️</button>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="img-modal" id="imgModal" onclick="this.classList.remove('open')">
+    <span class="close-modal">✕</span>
+    <img src="" alt="Preview" id="modalImg">
 </div>
 
 <script>
@@ -1070,6 +1102,37 @@ function daysUntilBirthday(m, d) {
 }
 
 // ============ TEAM CHAT ============
+let selectedFile = null;
+
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) { alert('File too large! Max 5MB allowed.'); e.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        selectedFile = { name: file.name, type: file.type, size: file.size, data: ev.target.result };
+        const preview = document.getElementById('filePreview');
+        const thumb = document.getElementById('previewThumb');
+        const info = document.getElementById('previewInfo');
+        if (file.type.startsWith('image/')) {
+            thumb.innerHTML = `<img src="${ev.target.result}" alt="preview" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">`;
+        } else {
+            thumb.innerHTML = `<div style="width:80px;height:80px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:32px;">📄</div>`;
+        }
+        const sizeKB = (file.size / 1024).toFixed(1);
+        info.innerHTML = `<strong>${file.name}</strong><br>${sizeKB} KB`;
+        preview.classList.add('active');
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeFile() {
+    selectedFile = null;
+    document.getElementById('filePreview').classList.remove('active');
+    document.getElementById('chatFileInput').value = '';
+}
+
 function renderChat() {
     // Show CEO announcement area
     const ceoArea = document.getElementById('ceoAnnounceArea');
@@ -1086,6 +1149,8 @@ function renderChat() {
                 <div class="pin-icon">📌</div>
                 <div class="pin-title">👑 CEO Announcement</div>
                 <div class="pin-text">${escapeHtml(m.text)}</div>
+                ${m.file && m.file.type.startsWith('image/') ? `<div class="chat-attachment"><img src="${m.file.data}" alt="shared image" onclick="openImgModal(this.src)" style="margin-top:8px;max-width:200px;border-radius:8px;"></div>` : ''}
+                ${m.file && !m.file.type.startsWith('image/') ? `<div class="chat-attachment"><a class="file-link" href="${m.file.data}" download="${m.file.name}">📄 ${m.file.name}</a></div>` : ''}
                 <div class="pin-time">${m.time} — by ${m.name}</div>
             </div>
         `).join('');
@@ -1104,11 +1169,20 @@ function renderChat() {
         const isOwn = m.email === currentUser.email;
         const initials = m.name.split(' ').map(w => w[0]).join('');
         const avClass = m.role === 'CEO' ? 'ceo-av' : m.role === 'CTO' ? 'cto-av' : '';
+        let attachment = '';
+        if (m.file) {
+            if (m.file.type.startsWith('image/')) {
+                attachment = `<div class="chat-attachment"><img src="${m.file.data}" alt="shared" onclick="openImgModal(this.src)"></div>`;
+            } else {
+                attachment = `<div class="chat-attachment"><a class="file-link" href="${m.file.data}" download="${m.file.name}">📄 ${m.file.name}</a></div>`;
+            }
+        }
         return `<div class="chat-msg ${isOwn ? 'own' : ''}">
             <div class="chat-avatar ${avClass}">${initials}</div>
             <div class="chat-bubble ${isOwn ? 'outgoing' : 'incoming'}">
                 ${!isOwn ? `<div class="sender">${m.name} ${m.role === 'CEO' ? '👑' : m.role === 'CTO' ? '⚙️' : ''}</div>` : ''}
-                <div>${escapeHtml(m.text)}</div>
+                ${m.text ? `<div>${escapeHtml(m.text)}</div>` : ''}
+                ${attachment}
                 <div class="time">${m.time}</div>
             </div>
         </div>`;
@@ -1119,19 +1193,30 @@ function renderChat() {
 function sendChat() {
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
-    if (!text) return;
+    if (!text && !selectedFile) return;
     const messages = getData('chat', []);
-    messages.push({
+    const msg = {
         email: currentUser.email,
         name: currentUser.name,
         role: currentUser.role,
-        text,
+        text: text || (selectedFile ? `Shared a file: ${selectedFile.name}` : ''),
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         type: 'message'
-    });
+    };
+    if (selectedFile) {
+        msg.file = { name: selectedFile.name, type: selectedFile.type, data: selectedFile.data };
+    }
+    messages.push(msg);
     setData('chat', messages);
     input.value = '';
+    removeFile();
     renderChat();
+}
+
+function openImgModal(src) {
+    const modal = document.getElementById('imgModal');
+    document.getElementById('modalImg').src = src;
+    modal.classList.add('open');
 }
 
 function sendAnnouncement() {
