@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next360 Organic Products - Office Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #d1fae5;
+            --bg: #f0fdf4;
+            --card: #ffffff;
+            --text: #064e3b;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --shadow: 0 4px 24px rgba(16,185,129,0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* Login */
+        .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #064e3b 0%, #10b981 100%); }
+        .login-box { background: var(--card); border-radius: 20px; padding: 48px 40px; width: 420px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+        .login-logo { text-align: center; margin-bottom: 32px; }
+        .login-logo img.logo-img { width: 80px; height: 80px; border-radius: 18px; object-fit: cover; margin-bottom: 12px; }
+        .login-logo h1 { font-size: 22px; font-weight: 700; color: var(--text); }
+        .login-logo p { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+        .form-group input, .form-group select { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; transition: border-color 0.2s; outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
+        .btn { padding: 14px 24px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-secondary { background: var(--border); color: var(--text); }
+        .btn-secondary:hover { background: #d1d5db; }
+        .btn-sm { padding: 8px 16px; font-size: 13px; }
+        .btn-xs { padding: 5px 10px; font-size: 11px; }
+        .btn-full { width: 100%; justify-content: center; }
+        .error-msg { color: var(--danger); font-size: 13px; margin-top: 8px; text-align: center; display: none; }
+
+        /* Dashboard */
+        .dashboard { display: none; min-height: 100vh; }
+        .topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .topbar-left img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+        .topbar-left h2 { font-size: 16px; font-weight: 700; }
+        .topbar-left span { font-size: 11px; color: var(--text-light); display: block; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .topbar-right .clock { font-size: 13px; color: var(--text-light); font-weight: 500; }
+        .user-badge { display: flex; align-items: center; gap: 10px; background: var(--primary-light); padding: 6px 14px 6px 8px; border-radius: 30px; }
+        .user-badge img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
+        .user-badge .info .name { font-size: 13px; font-weight: 600; }
+        .user-badge .info .role { font-size: 11px; color: var(--primary-dark); }
+
+        .main { padding: 28px 32px; }
+        .welcome-banner { background: linear-gradient(135deg, #064e3b, #10b981); border-radius: 16px; padding: 28px 32px; color: white; margin-bottom: 28px; display: flex; justify-content: space-between; align-items: center; }
+        .welcome-banner h2 { font-size: 22px; font-weight: 700; }
+        .welcome-banner p { font-size: 14px; opacity: 0.9; margin-top: 4px; }
+        .welcome-banner .clock-big { font-size: 42px; font-weight: 800; opacity: 0.9; }
+        .welcome-banner .date-big { font-size: 13px; opacity: 0.8; text-align: right; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .stat-card { background: var(--card); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); }
+        .stat-card .stat-label { font-size: 12px; color: var(--text-light); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card .stat-value { font-size: 28px; font-weight: 800; margin: 6px 0 2px; }
+        .stat-card .stat-sub { font-size: 12px; color: var(--text-light); }
+        .stat-card.green { border-color: var(--primary); }
+        .stat-card.red { border-color: var(--danger); }
+        .stat-card.yellow { border-color: var(--warning); }
+        .stat-card.blue { border-color: var(--info); }
+
+        .actions-row { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
+
+        .section { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 28px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .section-header h3 { font-size: 17px; font-weight: 700; }
+        .section-header select { padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; outline: none; }
+        .section-header select:focus { border-color: var(--primary); }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 14px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); background: var(--bg); border-bottom: 2px solid var(--border); }
+        td { padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: top; }
+        tr:hover td { background: #f0fdf4; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .badge-present { background: var(--primary-light); color: var(--primary-dark); }
+        .badge-absent { background: #fee2e2; color: #991b1b; }
+        .badge-sick { background: #fef3c7; color: #92400e; }
+        .badge-casual { background: #dbeafe; color: #1e40af; }
+        .badge-ceo { background: #faf5ff; color: #6b21a8; }
+        .badge-cto { background: #eff6ff; color: #1e40af; }
+        .badge-emp { background: var(--primary-light); color: var(--primary-dark); }
+        .badge-reviewed { background: var(--primary-light); color: var(--primary-dark); }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+
+        .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: var(--bg); border-radius: 10px; padding: 4px; overflow-x: auto; }
+        .tabs button { padding: 10px 16px; border: none; background: transparent; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-light); transition: all 0.2s; white-space: nowrap; }
+        .tabs button.active { background: var(--primary); color: white; }
+
+        .hidden { display: none !important; }
+
+        .leave-form { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 20px; padding: 16px; background: var(--bg); border-radius: 10px; }
+        .leave-form .form-group { margin-bottom: 0; flex: 1; min-width: 160px; }
+        .leave-form select, .leave-form input { width: 100%; padding: 10px 12px; border: 2px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; outline: none; }
+        .leave-form select:focus, .leave-form input:focus { border-color: var(--primary); }
+
+        /* Work Update */
+        .work-form { background: var(--bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .work-form textarea { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 14px; resize: vertical; min-height: 120px; outline: none; }
+        .work-form textarea:focus { border-color: var(--primary); }
+        .work-card { background: var(--bg); border-radius: 12px; padding: 16px; margin-bottom: 12px; border-left: 4px solid var(--primary); }
+        .work-card .work-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .work-card .work-header .date { font-size: 13px; color: var(--text-light); }
+        .work-card .work-body { font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+        .work-card .comment-box { margin-top: 12px; padding: 12px; background: white; border-radius: 8px; border: 1px solid var(--border); }
+        .work-card .comment-box .comment-label { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; }
+        .work-card .comment-box .comment-text { font-size: 13px; color: var(--text); }
+        .comment-input { display: flex; gap: 8px; margin-top: 8px; }
+        .comment-input input { flex: 1; padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; outline: none; }
+        .comment-input input:focus { border-color: var(--primary); }
+
+        .admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-light); }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+        /* Notifications */
+        .notif-wrapper { position: relative; }
+        .notif-bell { position: relative; background: none; border: none; cursor: pointer; font-size: 22px; padding: 6px; border-radius: 8px; transition: background 0.2s; }
+        .notif-bell:hover { background: var(--primary-light); }
+        .notif-badge { position: absolute; top: 2px; right: 2px; background: var(--danger); color: white; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--card); }
+        .notif-dropdown { display: none; position: absolute; top: 44px; right: 0; width: 360px; max-height: 420px; overflow-y: auto; background: var(--card); border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border: 1px solid var(--border); z-index: 200; }
+        .notif-dropdown.open { display: block; }
+        .notif-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .notif-header h4 { font-size: 14px; font-weight: 700; }
+        .notif-header button { background: none; border: none; font-size: 12px; color: var(--primary); cursor: pointer; font-weight: 600; font-family: inherit; }
+        .notif-item { padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+        .notif-item:hover { background: var(--primary-light); }
+        .notif-item.unread { background: #ecfdf5; border-left: 3px solid var(--primary); }
+        .notif-item .notif-text { font-size: 13px; line-height: 1.5; }
+        .notif-item .notif-time { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+        .notif-item .notif-comment { font-size: 12px; color: var(--primary-dark); margin-top: 4px; padding: 6px 8px; background: white; border-radius: 6px; border: 1px solid var(--border); }
+        .notif-empty { padding: 32px; text-align: center; color: var(--text-light); font-size: 13px; }
+        .notif-toast { position: fixed; top: 80px; right: 32px; background: var(--card); border-radius: 12px; padding: 16px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); border-left: 4px solid var(--primary); z-index: 300; animation: slideIn 0.3s ease, fadeOut 0.4s ease 4.6s forwards; max-width: 340px; }
+        .notif-toast .toast-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+        .notif-toast .toast-body { font-size: 12px; color: var(--text-light); line-height: 1.5; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); pointer-events: none; } }
+
+        @media (max-width: 768px) {
+            .topbar { padding: 0 16px; }
+            .main { padding: 16px; }
+            .welcome-banner { flex-direction: column; gap: 16px; text-align: center; }
+            .welcome-banner .clock-big { font-size: 32px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            table { font-size: 12px; }
+            td, th { padding: 8px 6px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-container" id="loginPage">
+    <div class="login-box">
+        <div class="login-logo">
+            <img src="images/logo.png" alt="Next360 Logo" class="logo-img">
+            <h1>Next360 Organic Products</h1>
+            <p>Office Attendance Dashboard</p>
+        </div>
+        <form onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="loginEmail" placeholder="Enter your email" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter your password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+            <div class="error-msg" id="loginError"></div>
+        </form>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboardPage">
+    <div class="topbar">
+        <div class="topbar-left">
+            <img src="images/logo.png" alt="Next360">
+            <div>
+                <h2>Next360</h2>
+                <span>Office Dashboard</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="clock" id="topClock"></div>
+            <div class="notif-wrapper">
+                <button class="notif-bell" onclick="toggleNotifDropdown()">🔔<span class="notif-badge hidden" id="notifCount">0</span></button>
+                <div class="notif-dropdown" id="notifDropdown">
+                    <div class="notif-header">
+                        <h4>Notifications</h4>
+                        <button onclick="markAllRead()">Mark all read</button>
+                    </div>
+                    <div id="notifList"></div>
+                </div>
+            </div>
+            <div class="user-badge">
+                <img src="" alt="avatar" id="userPhoto">
+                <div class="info">
+                    <div class="name" id="userName"></div>
+                    <div class="role" id="userRole"></div>
+                </div>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="handleLogout()">🚪 Logout</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="welcome-banner">
+            <div>
+                <h2 id="welcomeMsg">Good Morning!</h2>
+                <p>Office timings: 10:00 AM — 5:00 PM</p>
+            </div>
+            <div style="text-align:right">
+                <div class="clock-big" id="bigClock"></div>
+                <div class="date-big" id="todayDate"></div>
+            </div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="actions-row">
+            <button class="btn btn-primary" onclick="checkIn()" id="btnCheckIn">✅ Check In</button>
+            <button class="btn btn-danger" onclick="checkOut()" id="btnCheckOut">🚪 Check Out</button>
+        </div>
+
+        <div class="tabs" id="tabsContainer"></div>
+
+        <div id="panelToday" class="section">
+            <div class="section-header">
+                <h3>Today's Attendance — <span id="todayLabel"></span></h3>
+                <div class="clock" id="officeStatus"></div>
+            </div>
+            <table>
+                <thead><tr><th>Name</th><th>Role</th><th>Check In</th><th>Check Out</th><th>Status</th></tr></thead>
+                <tbody id="todayTable"></tbody>
+            </table>
+        </div>
+
+        <div class="section hidden" id="panelMonthly">
+            <div class="section-header">
+                <h3>Monthly Attendance Report</h3>
+                <select id="monthSelect" onchange="renderMonthly()"></select>
+            </div>
+            <table>
+                <thead><tr><th>Name</th><th>Present</th><th>Absent</th><th>Sick Leave</th><th>Casual Leave</th><th>Days Tracked</th></tr></thead>
+                <tbody id="monthlyTable"></tbody>
+            </table>
+        </div>
+
+        <div class="section hidden" id="panelLeave">
+            <div class="section-header">
+                <h3>Leave Management</h3>
+            </div>
+            <div class="leave-form">
+                <div class="form-group"><label>Date</label><input type="date" id="leaveDate"></div>
+                <div class="form-group"><label>Leave Type</label><select id="leaveType"><option value="sick">Sick Leave</option><option value="casual">Casual Leave</option></select></div>
+                <div class="form-group"><label>Reason</label><input type="text" id="leaveReason" placeholder="Brief reason"></div>
+                <button class="btn btn-primary btn-sm" onclick="markLeave()">Mark Leave</button>
+            </div>
+            <table>
+                <thead><tr><th>Date</th><th>Name</th><th>Type</th><th>Reason</th><th>Marked By</th></tr></thead>
+                <tbody id="leaveTable"></tbody>
+            </table>
+        </div>
+
+        <div class="section hidden" id="panelWork">
+            <div class="section-header">
+                <h3>📝 Work Updates — Today</h3>
+            </div>
+            <div id="workFormArea"></div>
+            <div id="workListArea"></div>
+        </div>
+
+        <div class="section hidden" id="panelReview">
+            <div class="section-header">
+                <h3>🔍 Review Work Updates</h3>
+                <select id="reviewDateSelect" onchange="renderReview()"></select>
+            </div>
+            <div id="reviewListArea"></div>
+        </div>
+
+        <div class="section hidden" id="panelTeam">
+            <div class="section-header">
+                <h3>👥 Team Overview — Manage Attendance</h3>
+            </div>
+            <table>
+                <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="teamTable"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============ USER DATA ============
+const USERS = [
+    { name: "Samhith Reddy", email: "samhithreddy@gmail.com", password: "samhithreddy101", role: "CEO" },
+    { name: "Shivaganesh", email: "shivaganesh@gmail.com", password: "shivaganesh102", role: "CTO" },
+    { name: "Soumya", email: "soumya@gmail.com", password: "soumya103", role: "Employee" },
+    { name: "Manaswini", email: "manaswini@gmail.com", password: "manaswini104", role: "Employee" },
+    { name: "Harshitha", email: "harshitha@gmail.com", password: "harshitha105", role: "Employee" },
+    { name: "Ashwanth", email: "ashwanth@gmail.com", password: "ashwanth106", role: "Employee" },
+    { name: "Srinitha", email: "srinitha@gmail.com", password: "srinitha107", role: "Employee" }
+];
+
+let currentUser = null;
+
+// ============ STORAGE ============
+function getData(k, fb) { try { const v = localStorage.getItem('nxt360_' + k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
+function setData(k, v) { localStorage.setItem('nxt360_' + k, JSON.stringify(v)); }
+function todayKey() { return new Date().toISOString().slice(0, 10); }
+
+// ============ ACCESS CONTROL ============
+function canSeeAll() { return currentUser && (currentUser.role === 'CEO' || currentUser.role === 'CTO'); }
+function canSeeUser(email) { return canSeeAll() || currentUser.email === email; }
+
+// ============ TABS CONFIG ============
+function getTabs() {
+    const tabs = [
+        { id: 'today', label: "📋 Today's Attendance", panels: ['panelToday'] },
+        { id: 'monthly', label: '📊 Monthly Report', panels: ['panelMonthly'] },
+        { id: 'leave', label: '🏖️ Leave Management', panels: ['panelLeave'] },
+        { id: 'work', label: '📝 Work Updates', panels: ['panelWork'] },
+    ];
+    if (canSeeAll()) {
+        tabs.push({ id: 'review', label: '🔍 Review Updates', panels: ['panelReview'] });
+        tabs.push({ id: 'team', label: '👥 Team Overview', panels: ['panelTeam'] });
+    }
+    return tabs;
+}
+
+function renderTabs() {
+    const tabs = getTabs();
+    const c = document.getElementById('tabsContainer');
+    c.innerHTML = tabs.map((t, i) => `<button class="${i === 0 ? 'active' : ''}" onclick="switchTab('${t.id}', this, ${JSON.stringify(t.panels).replace(/"/g, '&quot;')})">${t.label}</button>`).join('');
+}
+
+function switchTab(tab, btn, panels) {
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ['panelToday', 'panelMonthly', 'panelLeave', 'panelWork', 'panelReview', 'panelTeam'].forEach(id => {
+        document.getElementById(id).classList.toggle('hidden', !panels.includes(id));
+    });
+    if (tab === 'review') renderReview();
+    if (tab === 'team') renderTeam();
+}
+
+// ============ LOGIN ============
+function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const pass = document.getElementById('loginPassword').value;
+    const user = USERS.find(u => u.email === email && u.password === pass);
+    if (!user) {
+        const err = document.getElementById('loginError');
+        err.textContent = 'Invalid email or password';
+        err.style.display = 'block';
+        return;
+    }
+    currentUser = user;
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('dashboardPage').style.display = 'block';
+    initDashboard();
+}
+
+function handleLogout() {
+    const tk = todayKey();
+    const records = getData('records', {});
+    if (!records[tk]) records[tk] = {};
+    if (!records[tk][currentUser.email]) records[tk][currentUser.email] = {};
+    if (records[tk][currentUser.email].checkIn && !records[tk][currentUser.email].checkOut) {
+        records[tk][currentUser.email].checkOut = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+    setData('records', records);
+    currentUser = null;
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('dashboardPage').style.display = 'none';
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').style.display = 'none';
+}
+
+// ============ DASHBOARD INIT ============
+function initDashboard() {
+    const photo = document.getElementById('userPhoto');
+    if (currentUser.email === 'samhithreddy@gmail.com') photo.src = 'images/ceo.png';
+    else photo.src = 'images/logo.png';
+    document.getElementById('userName').textContent = currentUser.name;
+    document.getElementById('userRole').textContent = currentUser.role;
+    updateClock();
+    setInterval(updateClock, 1000);
+    renderTabs();
+    renderStats();
+    renderToday();
+    populateMonthSelect();
+    renderMonthly();
+    renderLeaves();
+    renderWorkUpdates();
+    renderReview();
+    renderTeam();
+    renderNotifications();
+    updateCheckButtons();
+
+    // Show toast for unread notifications on login
+    const notifs = getData('notifications', {});
+    const myNotifs = notifs[currentUser.email] || [];
+    const unread = myNotifs.filter(n => !n.read);
+    if (unread.length > 0) {
+        setTimeout(() => showToast('🔔 New Notification', `You have ${unread.length} unread review${unread.length > 1 ? 's' : ''} from your CEO. Check the bell icon!`), 1000);
+    }
+}
+
+function updateClock() {
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('topClock').textContent = time;
+    document.getElementById('bigClock').textContent = time;
+    document.getElementById('todayDate').textContent = date;
+    document.getElementById('todayLabel').textContent = date;
+    const h = now.getHours();
+    document.getElementById('officeStatus').innerHTML = (h >= 10 && h < 17)
+        ? '<span style="color:#059669">🟢 Office Open</span>'
+        : '<span style="color:#ef4444">🔴 Office Closed</span>';
+    let g = 'Good Morning';
+    if (h >= 12 && h < 17) g = 'Good Afternoon';
+    else if (h >= 17) g = 'Good Evening';
+    document.getElementById('welcomeMsg').textContent = `${g}, ${currentUser.name}! 👋`;
+}
+
+// ============ STATS ============
+function renderStats() {
+    const tk = todayKey();
+    const records = getData('records', {});
+    const leaves = getData('leaves', []);
+    const month = tk.slice(0, 7);
+    const users = canSeeAll() ? USERS : [currentUser];
+    let present = 0, absent = 0;
+    users.forEach(u => {
+        if (records[tk] && records[tk][u.email] && records[tk][u.email].checkIn) present++;
+        else absent++;
+    });
+    const sick = leaves.filter(l => l.type === 'sick' && l.date.startsWith(month) && (canSeeAll() || l.email === currentUser.email)).length;
+    const casual = leaves.filter(l => l.type === 'casual' && l.date.startsWith(month) && (canSeeAll() || l.email === currentUser.email)).length;
+    document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card green"><div class="stat-label">Today Present</div><div class="stat-value">${present}</div><div class="stat-sub">out of ${users.length}</div></div>
+        <div class="stat-card red"><div class="stat-label">Today Absent</div><div class="stat-value">${absent}</div><div class="stat-sub">not checked in</div></div>
+        <div class="stat-card yellow"><div class="stat-label">Sick Leave</div><div class="stat-value">${sick}</div><div class="stat-sub">this month</div></div>
+        <div class="stat-card blue"><div class="stat-label">Casual Leave</div><div class="stat-value">${casual}</div><div class="stat-sub">this month</div></div>
+    `;
+}
+
+// ============ CHECK IN / OUT ============
+function checkIn() {
+    const tk = todayKey();
+    const records = getData('records', {});
+    if (!records[tk]) records[tk] = {};
+    if (records[tk][currentUser.email] && records[tk][currentUser.email].checkIn) { alert('Already checked in today!'); return; }
+    records[tk][currentUser.email] = { checkIn: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), checkOut: '', status: 'present' };
+    setData('records', records);
+    updateCheckButtons(); renderStats(); renderToday(); renderTeam();
+}
+
+function checkOut() {
+    const tk = todayKey();
+    const records = getData('records', {});
+    if (records[tk] && records[tk][currentUser.email] && records[tk][currentUser.email].checkIn && !records[tk][currentUser.email].checkOut) {
+        records[tk][currentUser.email].checkOut = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        setData('records', records);
+        updateCheckButtons();
+        alert('Checked out successfully!');
+    } else { alert('You need to check in first!'); }
+}
+
+function updateCheckButtons() {
+    const tk = todayKey();
+    const records = getData('records', {});
+    const rec = records[tk] && records[tk][currentUser.email];
+    document.getElementById('btnCheckIn').disabled = !!(rec && rec.checkIn);
+    document.getElementById('btnCheckOut').disabled = !(rec && rec.checkIn && !rec.checkOut);
+    document.getElementById('btnCheckIn').style.opacity = (rec && rec.checkIn) ? '0.5' : '1';
+    document.getElementById('btnCheckOut').style.opacity = (rec && rec.checkIn && !rec.checkOut) ? '1' : '0.5';
+}
+
+// ============ TODAY TABLE ============
+function renderToday() {
+    const tk = todayKey();
+    const records = getData('records', {});
+    const leaves = getData('leaves', []);
+    const viewUsers = canSeeAll() ? USERS : [currentUser];
+    let html = '';
+    viewUsers.forEach(u => {
+        const rec = records[tk] && records[tk][u.email];
+        const leave = leaves.find(l => l.date === tk && l.email === u.email);
+        const roleBadge = u.role === 'CEO' ? 'badge-ceo' : u.role === 'CTO' ? 'badge-cto' : 'badge-emp';
+        let statusBadge = '', ci = '—', co = '—';
+        if (leave) statusBadge = `<span class="badge ${leave.type === 'sick' ? 'badge-sick' : 'badge-casual'}">${leave.type === 'sick' ? 'Sick Leave' : 'Casual Leave'}</span>`;
+        else if (rec && rec.checkIn) { ci = rec.checkIn; co = rec.checkOut || '—'; statusBadge = '<span class="badge badge-present">Present</span>'; }
+        else statusBadge = '<span class="badge badge-absent">Absent</span>';
+        html += `<tr><td><strong>${u.name}</strong></td><td><span class="badge ${roleBadge}">${u.role}</span></td><td>${ci}</td><td>${co}</td><td>${statusBadge}</td></tr>`;
+    });
+    document.getElementById('todayTable').innerHTML = html;
+}
+
+// ============ MONTHLY ============
+function populateMonthSelect() {
+    const sel = document.getElementById('monthSelect');
+    sel.innerHTML = '';
+    const now = new Date();
+    for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        sel.innerHTML += `<option value="${d.toISOString().slice(0,7)}">${d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</option>`;
+    }
+}
+
+function renderMonthly() {
+    const month = document.getElementById('monthSelect').value;
+    const records = getData('records', {});
+    const leaves = getData('leaves', []);
+    const viewUsers = canSeeAll() ? USERS : [currentUser];
+    let html = '';
+    viewUsers.forEach(u => {
+        let present = 0, absent = 0, sick = 0, casual = 0, tracked = 0;
+        Object.keys(records).forEach(date => {
+            if (date.startsWith(month)) {
+                tracked++;
+                if (records[date][u.email]) { if (records[date][u.email].status === 'present') present++; else absent++; }
+                else absent++;
+            }
+        });
+        leaves.filter(l => l.email === u.email && l.date.startsWith(month)).forEach(l => { if (l.type === 'sick') sick++; else casual++; });
+        html += `<tr><td><strong>${u.name}</strong></td><td><span class="badge badge-present">${present}</span></td><td><span class="badge badge-absent">${absent}</span></td><td><span class="badge badge-sick">${sick}</span></td><td><span class="badge badge-casual">${casual}</span></td><td>${tracked} days</td></tr>`;
+    });
+    document.getElementById('monthlyTable').innerHTML = html;
+}
+
+// ============ LEAVES ============
+function markLeave() {
+    const date = document.getElementById('leaveDate').value;
+    const type = document.getElementById('leaveType').value;
+    const reason = document.getElementById('leaveReason').value || 'Not specified';
+    if (!date) { alert('Please select a date'); return; }
+    const leaves = getData('leaves', []);
+    leaves.push({ date, email: currentUser.email, name: currentUser.name, type, reason, markedBy: currentUser.name });
+    setData('leaves', leaves);
+    document.getElementById('leaveReason').value = '';
+    renderLeaves(); renderStats(); renderToday(); alert('Leave marked!');
+}
+
+function renderLeaves() {
+    const leaves = getData('leaves', []);
+    const viewLeaves = canSeeAll() ? leaves : leaves.filter(l => l.email === currentUser.email);
+    let html = '';
+    viewLeaves.slice().reverse().forEach(l => {
+        html += `<tr><td>${l.date}</td><td>${l.name}</td><td><span class="badge ${l.type === 'sick' ? 'badge-sick' : 'badge-casual'}">${l.type === 'sick' ? 'Sick Leave' : 'Casual Leave'}</span></td><td>${l.reason}</td><td>${l.markedBy}</td></tr>`;
+    });
+    document.getElementById('leaveTable').innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:var(--text-light)">No leave records</td></tr>';
+}
+
+// ============ WORK UPDATES ============
+function renderWorkUpdates() {
+    const tk = todayKey();
+    const area = document.getElementById('workFormArea');
+    const work = getData('workUpdates', {});
+    const myWork = work[tk] && work[tk][currentUser.email];
+
+    if (myWork && myWork.submitted) {
+        area.innerHTML = `
+            <div class="work-card" style="border-left-color: var(--primary);">
+                <div class="work-header">
+                    <strong>Today's Work Update</strong>
+                    <span class="date">${tk}</span>
+                </div>
+                <div class="work-body">${escapeHtml(myWork.content)}</div>
+                ${myWork.reviewed ? `<div class="comment-box"><div class="comment-label">💬 ${myWork.reviewedBy}'s Comment</div><div class="comment-text">${escapeHtml(myWork.comment || 'No comment')}</div></div>` : '<div style="margin-top:10px"><span class="badge badge-pending">⏳ Awaiting Review</span></div>'}
+            </div>`;
+    } else {
+        area.innerHTML = `
+            <div class="work-form">
+                <h4 style="margin-bottom:12px">📝 Write your completed work before logging out:</h4>
+                <textarea id="workInput" placeholder="Describe what you completed today..."></textarea>
+                <div style="margin-top:12px; display:flex; gap:8px">
+                    <button class="btn btn-primary btn-sm" onclick="submitWorkUpdate()">Submit Work Update</button>
+                </div>
+            </div>`;
+    }
+
+    // Show past updates
+    const listArea = document.getElementById('workListArea');
+    let pastHtml = '<h4 style="margin-bottom:12px">📅 Past Work Updates</h4>';
+    const allWork = getData('workUpdates', {});
+    let hasPast = false;
+    Object.keys(allWork).sort().reverse().forEach(date => {
+        if (date === tk) return;
+        const entry = allWork[date] && allWork[date][currentUser.email];
+        if (entry && entry.submitted) {
+            hasPast = true;
+            pastHtml += `<div class="work-card">
+                <div class="work-header"><strong>Work Update</strong><span class="date">${date}</span></div>
+                <div class="work-body">${escapeHtml(entry.content)}</div>
+                ${entry.reviewed ? `<div class="comment-box"><div class="comment-label">💬 ${entry.reviewedBy}'s Comment</div><div class="comment-text">${escapeHtml(entry.comment || 'No comment')}</div></div>` : ''}
+            </div>`;
+        }
+    });
+    listArea.innerHTML = hasPast ? pastHtml : '';
+}
+
+function submitWorkUpdate() {
+    const content = document.getElementById('workInput').value.trim();
+    if (!content) { alert('Please write your work update before submitting!'); return; }
+    const tk = todayKey();
+    const work = getData('workUpdates', {});
+    if (!work[tk]) work[tk] = {};
+    work[tk][currentUser.email] = { content, submitted: true, reviewed: false, comment: '', reviewedBy: '', name: currentUser.name };
+    setData('workUpdates', work);
+    renderWorkUpdates();
+    alert('Work update submitted! ✅');
+}
+
+// ============ CEO/CTO REVIEW ============
+function renderReview() {
+    const work = getData('workUpdates', {});
+    const dates = Object.keys(work).sort().reverse();
+    const sel = document.getElementById('reviewDateSelect');
+    sel.innerHTML = dates.map(d => `<option value="${d}">${d}</option>`).join('');
+    const date = sel.value;
+    const container = document.getElementById('reviewListArea');
+    if (!date || !work[date]) { container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No work updates found</p></div>'; return; }
+
+    const entries = work[date];
+    let html = '';
+    USERS.forEach(u => {
+        const entry = entries[u.email];
+        if (!entry || !entry.submitted) return;
+        html += `<div class="work-card" style="border-left-color: ${entry.reviewed ? 'var(--primary)' : 'var(--warning)'};">
+            <div class="work-header">
+                <div><strong>${u.name}</strong> <span class="badge ${u.role === 'CEO' ? 'badge-ceo' : u.role === 'CTO' ? 'badge-cto' : 'badge-emp'}">${u.role}</span></div>
+                <span class="badge ${entry.reviewed ? 'badge-reviewed' : 'badge-pending'}">${entry.reviewed ? '✅ Reviewed' : '⏳ Pending'}</span>
+            </div>
+            <div class="work-body">${escapeHtml(entry.content)}</div>
+            ${entry.reviewed ? `<div class="comment-box"><div class="comment-label">💬 ${entry.reviewedBy}'s Comment</div><div class="comment-text">${escapeHtml(entry.comment)}</div></div>` : `
+            <div class="comment-input">
+                <input type="text" id="comment_${u.email}" placeholder="Write your comment...">
+                <button class="btn btn-primary btn-xs" onclick="submitComment('${date}','${u.email}')">Comment</button>
+            </div>`}
+        </div>`;
+    });
+    container.innerHTML = html || '<div class="empty-state"><div class="icon">📭</div><p>No work updates for this date</p></div>';
+}
+
+function submitComment(date, email) {
+    const input = document.getElementById('comment_' + email);
+    const comment = input.value.trim();
+    if (!comment) { alert('Please enter a comment!'); return; }
+    const work = getData('workUpdates', {});
+    if (work[date] && work[date][email]) {
+        work[date][email].reviewed = true;
+        work[date][email].comment = comment;
+        work[date][email].reviewedBy = currentUser.name;
+        setData('workUpdates', work);
+
+        // Create notification for the employee
+        const notifs = getData('notifications', {});
+        if (!notifs[email]) notifs[email] = [];
+        notifs[email].unshift({
+            id: Date.now(),
+            type: 'work_reviewed',
+            date: date,
+            from: currentUser.name,
+            fromRole: currentUser.role,
+            comment: comment,
+            read: false,
+            time: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        });
+        setData('notifications', notifs);
+
+        renderReview();
+        alert('Comment submitted & notification sent! ✅');
+    }
+}
+
+// ============ NOTIFICATIONS ============
+function toggleNotifDropdown() {
+    const dd = document.getElementById('notifDropdown');
+    dd.classList.toggle('open');
+    renderNotifications();
+}
+
+function renderNotifications() {
+    const notifs = getData('notifications', {});
+    const myNotifs = notifs[currentUser.email] || [];
+    const unread = myNotifs.filter(n => !n.read).length;
+    const badge = document.getElementById('notifCount');
+    if (unread > 0) {
+        badge.textContent = unread;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+
+    const list = document.getElementById('notifList');
+    if (myNotifs.length === 0) {
+        list.innerHTML = '<div class="notif-empty">🔔 No notifications yet</div>';
+        return;
+    }
+
+    list.innerHTML = myNotifs.map(n => `
+        <div class="notif-item ${n.read ? '' : 'unread'}" onclick="readNotif(${n.id})">
+            <div class="notif-text">
+                <strong>${n.from}</strong> (${n.fromRole}) reviewed your work update for <strong>${n.date}</strong>
+            </div>
+            <div class="notif-comment">💬 \"${escapeHtml(n.comment)}\"</div>
+            <div class="notif-time">${n.time}</div>
+        </div>
+    `).join('');
+}
+
+function readNotif(id) {
+    const notifs = getData('notifications', {});
+    const myNotifs = notifs[currentUser.email] || [];
+    const notif = myNotifs.find(n => n.id === id);
+    if (notif) { notif.read = true; setData('notifications', notifs); }
+    renderNotifications();
+}
+
+function markAllRead() {
+    const notifs = getData('notifications', {});
+    const myNotifs = notifs[currentUser.email] || [];
+    myNotifs.forEach(n => n.read = true);
+    setData('notifications', notifs);
+    renderNotifications();
+}
+
+function showToast(title, body) {
+    const toast = document.createElement('div');
+    toast.className = 'notif-toast';
+    toast.innerHTML = `<div class="toast-title">${title}</div><div class="toast-body">${body}</div>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const w = document.querySelector('.notif-wrapper');
+    if (w && !w.contains(e.target)) {
+        document.getElementById('notifDropdown').classList.remove('open');
+    }
+});
+
+// ============ TEAM (CEO/CTO) ============
+function renderTeam() {
+    if (!canSeeAll()) return;
+    const tk = todayKey();
+    const records = getData('records', {});
+    const leaves = getData('leaves', []);
+    let html = '';
+    USERS.forEach(u => {
+        const rec = records[tk] && records[tk][u.email];
+        const leave = leaves.find(l => l.date === tk && l.email === u.email);
+        const roleBadge = u.role === 'CEO' ? 'badge-ceo' : u.role === 'CTO' ? 'badge-cto' : 'badge-emp';
+        let status = 'Absent';
+        if (leave) status = leave.type === 'sick' ? '🤒 Sick Leave' : '🏖️ Casual Leave';
+        else if (rec && rec.checkIn) status = '✅ Present';
+        html += `<tr><td><strong>${u.name}</strong></td><td><span class="badge ${roleBadge}">${u.role}</span></td><td>${u.email}</td><td>${status}</td><td class="admin-actions">
+            <button class="btn btn-primary btn-xs" onclick="adminMark('${u.email}','${u.name}','present')">✅ Present</button>
+            <button class="btn btn-danger btn-xs" onclick="adminMark('${u.email}','${u.name}','absent')">❌ Absent</button>
+            <button class="btn btn-secondary btn-xs" onclick="adminMarkLeave('${u.email}','${u.name}','sick')">🤒 Sick</button>
+            <button class="btn btn-secondary btn-xs" onclick="adminMarkLeave('${u.email}','${u.name}','casual')">🏖️ Casual</button>
+        </td></tr>`;
+    });
+    document.getElementById('teamTable').innerHTML = html;
+}
+
+function adminMark(email, name, status) {
+    const tk = todayKey();
+    const records = getData('records', {});
+    if (!records[tk]) records[tk] = {};
+    records[tk][email] = { checkIn: status === 'present' ? 'Admin Marked' : '', checkOut: '', status };
+    setData('records', records);
+    renderStats(); renderToday(); renderTeam(); renderMonthly();
+}
+
+function adminMarkLeave(email, name, type) {
+    const tk = todayKey();
+    const leaves = getData('leaves', []);
+    leaves.push({ date: tk, email, name, type, reason: 'Marked by Admin', markedBy: currentUser.name });
+    setData('leaves', leaves);
+    renderStats(); renderLeaves(); renderToday(); renderTeam();
+}
+
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+</script>
+</body>
+</html>
