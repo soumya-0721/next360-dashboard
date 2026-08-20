@@ -244,6 +244,19 @@
         .img-modal img { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
         .img-modal .close-modal { position: absolute; top: 20px; right: 30px; font-size: 36px; color: white; cursor: pointer; }
 
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .settings-card { background: var(--bg); border-radius: 12px; padding: 20px; border: 2px solid var(--border); transition: border-color 0.2s; }
+        .settings-card:hover { border-color: var(--primary); }
+        .settings-card .s-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .settings-card .s-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+        .settings-card .s-name { font-size: 16px; font-weight: 700; }
+        .settings-card .s-role { font-size: 12px; color: var(--text-light); }
+        .settings-card .s-field { margin-bottom: 10px; }
+        .settings-card .s-field label { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .settings-card .s-field input, .settings-card .s-field select { width: 100%; padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; outline: none; }
+        .settings-card .s-field input:focus, .settings-card .s-field select:focus { border-color: var(--primary); }
+        .settings-card .s-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .settings-card .s-delete { margin-left: auto; }
         @media (max-width: 768px) {
             .topbar { padding: 0 16px; }
             .main { padding: 16px; }
@@ -461,6 +474,14 @@
                 </div>
             </div>
         </div>
+
+        <div class="section hidden" id="panelSettings">
+            <div class="section-header">
+                <h3>⚙️ CEO Settings — Manage Team Profiles</h3>
+                <button class="btn btn-primary btn-sm" onclick="addNewMember()">➕ Add Member</button>
+            </div>
+            <div id="settingsContent"></div>
+        </div>
     </div>
 </div>
 
@@ -472,7 +493,7 @@
 
 <script>
 // ============ USER DATA ============
-const USERS = [
+const DEFAULT_USERS = [
     { name: "Samhith Reddy", email: "samhithreddy@gmail.com", password: "samhithreddy101", role: "CEO" },
     { name: "Shivaganesh", email: "shivaganesh@gmail.com", password: "shivaganesh102", role: "CTO" },
     { name: "Soumya", email: "soumya@gmail.com", password: "soumya103", role: "Employee" },
@@ -481,6 +502,14 @@ const USERS = [
     { name: "Ashwanth", email: "ashwanth@gmail.com", password: "ashwanth106", role: "Employee" },
     { name: "Srinitha", email: "srinitha@gmail.com", password: "srinitha107", role: "Employee" }
 ];
+
+// Initialize users in localStorage if not present
+if (!localStorage.getItem('nxt360_users')) {
+    localStorage.setItem('nxt360_users', JSON.stringify(DEFAULT_USERS));
+}
+function getUsers() { return JSON.parse(localStorage.getItem('nxt360_users') || JSON.stringify(DEFAULT_USERS)); }
+function setUsers(u) { localStorage.setItem('nxt360_users', JSON.stringify(u)); }
+function USERS() { return getUsers(); }
 
 let currentUser = null;
 
@@ -508,6 +537,9 @@ function getTabs() {
         tabs.push({ id: 'review', label: '🔍 Review Updates', panels: ['panelReview'] });
         tabs.push({ id: 'team', label: '👥 Team Overview', panels: ['panelTeam'] });
     }
+    if (currentUser.role === 'CEO') {
+        tabs.push({ id: 'settings', label: '⚙️ Settings', panels: ['panelSettings'] });
+    }
     return tabs;
 }
 
@@ -520,7 +552,7 @@ function renderTabs() {
 function switchTab(tab, btn, panels) {
     document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['panelToday', 'panelMonthly', 'panelLeave', 'panelWork', 'panelReview', 'panelTeam', 'panelCharts', 'panelBirthday', 'panelChat'].forEach(id => {
+    ['panelToday', 'panelMonthly', 'panelLeave', 'panelWork', 'panelReview', 'panelTeam', 'panelCharts', 'panelBirthday', 'panelChat', 'panelSettings'].forEach(id => {
         document.getElementById(id).classList.toggle('hidden', !panels.includes(id));
     });
     if (tab === 'review') renderReview();
@@ -528,6 +560,7 @@ function switchTab(tab, btn, panels) {
     if (tab === 'charts') renderCharts();
     if (tab === 'birthday') renderBirthdays();
     if (tab === 'chat') renderChat();
+    if (tab === 'settings') renderSettings();
 }
 
 // ============ LOGIN ============
@@ -535,7 +568,7 @@ function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim().toLowerCase();
     const pass = document.getElementById('loginPassword').value.trim();
-    const user = USERS.find(u => u.email === email && u.password === pass);
+    const user = USERS().find(u => u.email === email && u.password === pass);
     if (!user) {
         const err = document.getElementById('loginError');
         err.textContent = 'Invalid email or password. Check case-sensitive password!';
@@ -620,7 +653,7 @@ function renderStats() {
     const records = getData('records', {});
     const leaves = getData('leaves', []);
     const month = tk.slice(0, 7);
-    const users = canSeeAll() ? USERS : [currentUser];
+    const users = canSeeAll() ? USERS() : [currentUser];
     let present = 0, absent = 0;
     users.forEach(u => {
         if (records[tk] && records[tk][u.email] && records[tk][u.email].checkIn) present++;
@@ -673,7 +706,7 @@ function renderToday() {
     const tk = todayKey();
     const records = getData('records', {});
     const leaves = getData('leaves', []);
-    const viewUsers = canSeeAll() ? USERS : [currentUser];
+    const viewUsers = canSeeAll() ? USERS() : [currentUser];
     let html = '';
     viewUsers.forEach(u => {
         const rec = records[tk] && records[tk][u.email];
@@ -703,7 +736,7 @@ function renderMonthly() {
     const month = document.getElementById('monthSelect').value;
     const records = getData('records', {});
     const leaves = getData('leaves', []);
-    const viewUsers = canSeeAll() ? USERS : [currentUser];
+    const viewUsers = canSeeAll() ? USERS() : [currentUser];
     let html = '';
     viewUsers.forEach(u => {
         let present = 0, absent = 0, sick = 0, casual = 0, tracked = 0;
@@ -815,7 +848,7 @@ function renderReview() {
 
     const entries = work[date];
     let html = '';
-    USERS.forEach(u => {
+    USERS().forEach(u => {
         const entry = entries[u.email];
         if (!entry || !entry.submitted) return;
         html += `<div class="work-card" style="border-left-color: ${entry.reviewed ? 'var(--primary)' : 'var(--warning)'};">
@@ -940,7 +973,7 @@ function renderTeam() {
     const records = getData('records', {});
     const leaves = getData('leaves', []);
     let html = '';
-    USERS.forEach(u => {
+    USERS().forEach(u => {
         const rec = records[tk] && records[tk][u.email];
         const leave = leaves.find(l => l.date === tk && l.email === u.email);
         const roleBadge = u.role === 'CEO' ? 'badge-ceo' : u.role === 'CTO' ? 'badge-cto' : 'badge-emp';
@@ -991,9 +1024,9 @@ function renderAttendanceBar() {
         const key = d.toISOString().slice(0, 10);
         const day = d.toLocaleDateString('en-US', { weekday: 'short' });
         let present = 0;
-        USERS.forEach(u => { if (records[key] && records[key][u.email] && records[key][u.email].checkIn) present++; });
-        const pct = Math.round((present / USERS.length) * 100);
-        html += `<div class="bar-col"><div class="bar-value">${present}/${USERS.length}</div><div class="bar green" style="height:${Math.max(pct, 5)}%"></div><div class="bar-label">${day}</div></div>`;
+        USERS().forEach(u => { if (records[key] && records[key][u.email] && records[key][u.email].checkIn) present++; });
+        const pct = Math.round((present / USERS().length) * 100);
+        html += `<div class="bar-col"><div class="bar-value">${present}/${USERS().length}</div><div class="bar green" style="height:${Math.max(pct, 5)}%"></div><div class="bar-label">${day}</div></div>`;
     }
     container.innerHTML = html;
 }
@@ -1003,13 +1036,13 @@ function renderDonut() {
     const records = getData('records', {});
     const leaves = getData('leaves', []);
     let present = 0, absent = 0, sick = 0, casual = 0;
-    USERS.forEach(u => {
+    USERS().forEach(u => {
         const leave = leaves.find(l => l.date === tk && l.email === u.email);
         if (leave) { if (leave.type === 'sick') sick++; else casual++; }
         else if (records[tk] && records[tk][u.email] && records[tk][u.email].checkIn) present++;
         else absent++;
     });
-    const total = USERS.length || 1;
+    const total = USERS().length || 1;
     const data = [
         { val: present, color: '#10b981', label: 'Present' },
         { val: absent, color: '#ef4444', label: 'Absent' },
@@ -1039,7 +1072,7 @@ function renderPerformance() {
     const month = new Date().toISOString().slice(0, 7);
     const records = getData('records', {});
     let html = '';
-    USERS.forEach(u => {
+    USERS().forEach(u => {
         let days = 0;
         Object.keys(records).forEach(date => {
             if (date.startsWith(month) && records[date][u.email] && records[date][u.email].checkIn) days++;
@@ -1056,7 +1089,7 @@ function renderLeaveChart() {
     const month = new Date().toISOString().slice(0, 7);
     const leaves = getData('leaves', []);
     let html = '';
-    USERS.forEach(u => {
+    USERS().forEach(u => {
         const userLeaves = leaves.filter(l => l.email === u.email && l.date.startsWith(month)).length;
         const pct = Math.min(userLeaves * 20, 100);
         const shortName = u.name.split(' ')[0];
@@ -1066,15 +1099,17 @@ function renderLeaveChart() {
 }
 
 // ============ BIRTHDAY BOARD ============
-const BIRTHDAYS = [
-    { name: 'Samhith Reddy', role: 'CEO', month: 6, day: 12 },
-    { name: 'Shivaganesh', role: 'CTO', month: 3, day: 22 },
-    { name: 'Soumya', role: 'Employee', month: 2, day: 7 },
-    { name: 'Manaswini', role: 'Employee', month: 7, day: 14 },
-    { name: 'Harshitha', role: 'Employee', month: 8, day: 3 },
-    { name: 'Ashwanth', role: 'Employee', month: 10, day: 19 },
-    { name: 'Srinitha', role: 'Employee', month: 11, day: 28 }
-];
+const BIRTHDAYS = [];
+function initBIRTHDAYS() {
+    const bd = getBirthdays();
+    const users = USERS();
+    BIRTHDAYS.length = 0;
+    users.forEach(u => {
+        const b = bd[u.name];
+        if (b) BIRTHDAYS.push({ name: u.name, role: u.role, month: b.month, day: b.day });
+    });
+}
+initBIRTHDAYS();
 
 function renderBdayWidget() {
     const container = document.getElementById('bdayWidget');
@@ -1291,6 +1326,118 @@ function sendAnnouncement() {
     input.value = '';
     renderChat();
     alert('📢 Announcement posted! All team members will see it.');
+}
+
+// ============ CEO SETTINGS ============
+const BIRTHDAYS_MAP = [
+    { name: 'Samhith Reddy', month: 6, day: 12 },
+    { name: 'Shivaganesh', month: 3, day: 22 },
+    { name: 'Soumya', month: 2, day: 7 },
+    { name: 'Manaswini', month: 7, day: 14 },
+    { name: 'Harshitha', month: 8, day: 3 },
+    { name: 'Ashwanth', month: 10, day: 19 },
+    { name: 'Srinitha', month: 11, day: 28 }
+];
+
+function getBirthdays() {
+    let bd = getData('birthdays', null);
+    if (!bd) { bd = {}; BIRTHDAYS_MAP.forEach(b => { bd[b.name] = { month: b.month, day: b.day }; }); setData('birthdays', bd); }
+    return bd;
+}
+function setBirthdays(bd) { setData('birthdays', bd); }
+
+function renderSettings() {
+    const users = USERS();
+    const bd = getBirthdays();
+    let html = '<div class="settings-grid">';
+    users.forEach((u, i) => {
+        const initials = u.name.split(' ').map(w => w[0]).join('');
+        const avColor = u.role === 'CEO' ? '#7c3aed' : u.role === 'CTO' ? '#2563eb' : '#10b981';
+        const bday = bd[u.name] || { month: 1, day: 1 };
+        const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        html += `<div class="settings-card">
+            <div class="s-header">
+                <div class="s-avatar" style="background:${avColor}">${initials}</div>
+                <div><div class="s-name">${u.name}</div><div class="s-role">${u.role}</div></div>
+            </div>
+            <div class="s-field"><label>Full Name</label><input type="text" id="setName_${i}" value="${escapeHtml(u.name)}"></div>
+            <div class="s-field"><label>Email</label><input type="email" id="setEmail_${i}" value="${escapeHtml(u.email)}"></div>
+            <div class="s-field"><label>Password</label><input type="text" id="setPass_${i}" value="${escapeHtml(u.password)}"></div>
+            <div class="s-field"><label>Role</label><select id="setRole_${i}">
+                <option value="CEO" ${u.role==='CEO'?'selected':''}>CEO</option>
+                <option value="CTO" ${u.role==='CTO'?'selected':''}>CTO</option>
+                <option value="Employee" ${u.role==='Employee'?'selected':''}>Employee</option>
+            </select></div>
+            <div class="s-field"><label>Birthday Month</label><select id="setBMonth_${i}">
+                ${months.map((m,mi) => `<option value="${mi+1}" ${bday.month===mi+1?'selected':''}>${m}</option>`).join('')}
+            </select></div>
+            <div class="s-field"><label>Birthday Day</label><input type="number" id="setBDay_${i}" value="${bday.day}" min="1" max="31"></div>
+            <div class="s-actions">
+                <button class="btn btn-primary btn-xs" onclick="saveProfile(${i})">💾 Save</button>
+                ${u.role !== 'CEO' ? `<button class="btn btn-danger btn-xs s-delete" onclick="deleteMember(${i})">🗑️ Remove</button>` : ''}
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    document.getElementById('settingsContent').innerHTML = html;
+}
+
+function saveProfile(index) {
+    const users = USERS();
+    const name = document.getElementById('setName_' + index).value.trim();
+    const email = document.getElementById('setEmail_' + index).value.trim().toLowerCase();
+    const pass = document.getElementById('setPass_' + index).value.trim();
+    const role = document.getElementById('setRole_' + index).value;
+    const bMonth = parseInt(document.getElementById('setBMonth_' + index).value);
+    const bDay = parseInt(document.getElementById('setBDay_' + index).value);
+    if (!name || !email || !pass) { alert('Name, email and password are required!'); return; }
+    if (bDay < 1 || bDay > 31) { alert('Invalid birthday day!'); return; }
+    const oldEmail = users[index].email;
+    users[index] = { name, email, password: pass, role };
+    setUsers(users);
+    const bd = getBirthdays();
+    bd[name] = { month: bMonth, day: bDay };
+    delete bd[users[index].name];
+    setBirthdays(bd);
+    // Update BIRTHDAYS array for widget
+    updateBIRTHDAYSFromStorage();
+    alert('Profile saved! ✅');
+    renderSettings();
+}
+
+function deleteMember(index) {
+    if (!confirm('Remove this team member?')) return;
+    const users = USERS();
+    const removed = users.splice(index, 1)[0];
+    setUsers(users);
+    const bd = getBirthdays();
+    delete bd[removed.name];
+    setBirthdays(bd);
+    updateBIRTHDAYSFromStorage();
+    alert(removed.name + ' removed! ✅');
+    renderSettings();
+}
+
+function addNewMember() {
+    const users = USERS();
+    users.push({ name: 'New Member', email: 'newmember@gmail.com', password: 'password123', role: 'Employee' });
+    setUsers(users);
+    const bd = getBirthdays();
+    bd['New Member'] = { month: 1, day: 1 };
+    setBirthdays(bd);
+    updateBIRTHDAYSFromStorage();
+    renderSettings();
+    alert('New member added! Edit their details below.');
+}
+
+function updateBIRTHDAYSFromStorage() {
+    const bd = getBirthdays();
+    BIRTHDAYS.length = 0;
+    const users = USERS();
+    users.forEach(u => {
+        const b = bd[u.name];
+        if (b) BIRTHDAYS.push({ name: u.name, role: u.role, month: b.month, day: b.day });
+    });
 }
 
 function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
