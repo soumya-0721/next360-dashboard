@@ -1289,10 +1289,6 @@ function sendAnnouncement() {
     renderChat();
     alert('📢 Announcement posted! All team members will see it.');
 }
-    setData('chat', messages);
-    input.value = '';
-    renderChat();
-}
 
 function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 </script>
