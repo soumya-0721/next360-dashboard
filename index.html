@@ -1149,7 +1149,24 @@ function renderLeaveChart() {
     container.innerHTML = html;
 }
 
-// ============ BIRTHDAY BOARD ============
+// ============ BIRTHDAYS DATA ============
+const BIRTHDAYS_MAP = [
+    { name: 'Samhith Reddy', month: 6, day: 12 },
+    { name: 'Shivaganesh', month: 3, day: 22 },
+    { name: 'Soumya', month: 2, day: 7 },
+    { name: 'Manaswini', month: 7, day: 14 },
+    { name: 'Harshitha', month: 8, day: 3 },
+    { name: 'Ashwanth', month: 10, day: 19 },
+    { name: 'Srinitha', month: 11, day: 28 }
+];
+
+function getBirthdays() {
+    let bd = getData('birthdays', null);
+    if (!bd) { bd = {}; BIRTHDAYS_MAP.forEach(b => { bd[b.name] = { month: b.month, day: b.day }; }); setData('birthdays', bd); }
+    return bd;
+}
+function setBirthdays(bd) { setData('birthdays', bd); }
+
 const BIRTHDAYS = [];
 function initBIRTHDAYS() {
     const bd = getBirthdays();
@@ -1383,23 +1400,6 @@ function sendAnnouncement() {
 }
 
 // ============ CEO SETTINGS ============
-const BIRTHDAYS_MAP = [
-    { name: 'Samhith Reddy', month: 6, day: 12 },
-    { name: 'Shivaganesh', month: 3, day: 22 },
-    { name: 'Soumya', month: 2, day: 7 },
-    { name: 'Manaswini', month: 7, day: 14 },
-    { name: 'Harshitha', month: 8, day: 3 },
-    { name: 'Ashwanth', month: 10, day: 19 },
-    { name: 'Srinitha', month: 11, day: 28 }
-];
-
-function getBirthdays() {
-    let bd = getData('birthdays', null);
-    if (!bd) { bd = {}; BIRTHDAYS_MAP.forEach(b => { bd[b.name] = { month: b.month, day: b.day }; }); setData('birthdays', bd); }
-    return bd;
-}
-function setBirthdays(bd) { setData('birthdays', bd); }
-
 function renderSettings() {
     const users = USERS();
     const bd = getBirthdays();
@@ -1456,6 +1456,13 @@ function saveProfile(index) {
     bd[name] = { month: bMonth, day: bDay };
     setBirthdays(bd);
     updateBIRTHDAYSFromStorage();
+    // If editing self, update currentUser and topbar
+    if (currentUser && users[index].email === currentUser.email) {
+        currentUser = users[index];
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userRole').textContent = currentUser.role;
+    }
+    renderBdayWidget();
     alert('Profile saved! ✅');
     renderSettings();
 }
@@ -1481,6 +1488,7 @@ function deleteMember(index) {
     setBirthdays(bd);
     updateBIRTHDAYSFromStorage();
     alert(member.name + ' removed! ✅');
+    renderBdayWidget();
     renderSettings();
 }
 
@@ -1494,6 +1502,7 @@ function addNewMember() {
     bd[newName] = { month: 1, day: 1 };
     setBirthdays(bd);
     updateBIRTHDAYSFromStorage();
+    renderBdayWidget();
     renderSettings();
     // Scroll to the new card
     const cards = document.querySelectorAll('.settings-card');
