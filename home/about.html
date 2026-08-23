@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="About Next360 Organic Products — our story, mission, vision, values, and the people behind India's organic revolution.">
+    <title>About Next360 | Next360 Organic Products</title>
+
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root {
+            --nx-green: #164A36;
+            --nx-green-dark: #0D2F24;
+            --nx-green-light: #e8f5ee;
+            --nx-sage: #8FAF9A;
+            --nx-cream: #F7F4EA;
+            --nx-white: #FFFFFF;
+            --nx-charcoal: #202824;
+            --nx-gold: #C89B3C;
+            --border: #E8E6E1;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            color: var(--gray-800);
+            background-color: var(--gray-50);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        ::selection {
+            background: var(--nx-green-light);
+            color: var(--nx-green-dark);
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--nx-green);
+            outline-offset: 2px;
+        }
+
+        /* Navbar */
+        .nx-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1050;
+            background: var(--nx-white);
+            height: 64px;
+            border-bottom: 1px solid var(--border);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .nx-navbar.scrolled {
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        .nx-brand-text {
+            color: var(--nx-green) !important;
+            letter-spacing: 1px;
+            font-weight: 800 !important;
+        }
+
+        .nx-navbar .navbar-nav .nav-link {
+            color: var(--gray-600);
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .nx-navbar .navbar-nav .nav-link:hover,
+        .nx-navbar .navbar-nav .nav-link.active {
+            color: var(--nx-green);
+        }
+
+        .nx-navbar .navbar-nav .nav-link.active {
+            border-bottom-color: var(--nx-green);
+            font-weight: 600;
+        }
+
+        .nx-btn-primary {
+            background: var(--nx-green) !important;
+            color: #fff !important;
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 10px 24px !important;
+            font-weight: 600 !important;
+            font-size: 14px !important;
+            transition: background 0.2s, transform 0.2s !important;
+        }
+
+        .nx-btn-primary:hover {
+            background: var(--nx-green-dark) !important;
+            transform: translateY(-1px);
+        }
+
+        /* Page Hero */
+        .nx-page-hero {
+            background: var(--nx-green);
+            padding: 120px 0 56px;
+            text-align: left;
+        }
+
+        .nx-page-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--nx-white);
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .nx-page-hero .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        .nx-page-hero .breadcrumb-item,
+        .nx-page-hero .breadcrumb-item a {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .nx-page-hero .breadcrumb-item a:hover {
+            color: var(--nx-white);
+            text-decoration: underline;
+        }
+
+        .nx-page-hero .breadcrumb-item.active {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .nx-page-hero .breadcrumb-item + .breadcrumb-item::before {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .nx-page-hero p {
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 560px;
+            margin: 0;
+        }
+
+        /* Section Titles */
+        .nx-section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 12px;
+        }
+
+        .nx-section-subtitle {
+            font-size: 15px;
+            color: var(--gray-500);
+            max-width: 540px;
+        }
+
+        /* Mission & Vision */
+        .nx-mv {
+            padding: 80px 0;
+            background: var(--nx-white);
+        }
+
+        .nx-mv-card {
+            background: var(--gray-50);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px 32px;
+            height: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nx-mv-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+        }
+
+        .nx-mv-card.mission::before {
+            background: var(--nx-green);
+        }
+
+        .nx-mv-card.vision::before {
+            background: var(--nx-gold);
+        }
+
+        .nx-mv-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .nx-mv-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .nx-mv-card.mission .nx-mv-icon {
+            background: var(--nx-green-light);
+            color: var(--nx-green);
+        }
+
+        .nx-mv-card.vision .nx-mv-icon {
+            background: #fdf6e3;
+            color: var(--nx-gold);
+        }
+
+        .nx-mv-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 12px;
+        }
+
+        .nx-mv-card p {
+            font-size: 15px;
+            color: var(--gray-600);
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        /* Our Story */
+        .nx-story {
+            padding: 80px 0;
+            background: var(--nx-cream);
+        }
+
+        .nx-story-text p {
+            font-size: 15px;
+            color: var(--gray-600);
+            line-height: 1.85;
+            margin-bottom: 16px;
+        }
+
+        .nx-story-img {
+            max-width: 320px;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Values */
+        .nx-values {
+            padding: 80px 0;
+            background: var(--nx-white);
+        }
+
+        .nx-value-card {
+            background: var(--gray-50);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px 28px;
+            height: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-align: center;
+        }
+
+        .nx-value-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .nx-value-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: var(--nx-green-light);
+            color: var(--nx-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin: 0 auto 20px;
+        }
+
+        .nx-value-card h5 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 10px;
+        }
+
+        .nx-value-card p {
+            font-size: 14px;
+            color: var(--gray-500);
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        /* Leadership */
+        .nx-leadership {
+            padding: 80px 0;
+            background: var(--nx-green);
+        }
+
+        .nx-leadership h2 {
+            color: var(--nx-white);
+        }
+
+        .nx-ceo-card {
+            display: flex;
+            align-items: center;
+            gap: 48px;
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .nx-ceo-img {
+            width: 160px;
+            height: 160px;
+            min-width: 160px;
+            border-radius: 20px;
+            object-fit: cover;
+            border: 3px solid rgba(255,255,255,0.15);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+        }
+
+        .nx-ceo-quote {
+            position: relative;
+        }
+
+        .nx-ceo-quote .bi-quote {
+            font-size: 48px;
+            color: var(--nx-gold);
+            opacity: 0.3;
+            position: absolute;
+            top: -14px;
+            left: -8px;
+            line-height: 1;
+        }
+
+        .nx-ceo-quote-text {
+            font-size: 17px;
+            font-style: italic;
+            color: rgba(255,255,255,0.9);
+            line-height: 1.8;
+            position: relative;
+            z-index: 1;
+            padding-left: 36px;
+        }
+
+        .nx-ceo-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--nx-white);
+            margin-top: 20px;
+            margin-bottom: 2px;
+            padding-left: 36px;
+        }
+
+        .nx-ceo-title {
+            font-size: 13px;
+            color: var(--nx-gold);
+            font-weight: 500;
+            padding-left: 36px;
+        }
+
+        /* Stats */
+        .nx-stats {
+            padding: 80px 0;
+            background: var(--nx-green);
+        }
+
+        .nx-stat-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--nx-white);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .nx-stat-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.65);
+            font-weight: 500;
+        }
+
+        /* Office */
+        .nx-office {
+            padding: 80px 0;
+            background: var(--nx-white);
+        }
+
+        .nx-office-card {
+            background: var(--gray-50);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .nx-office-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--nx-green-light);
+            color: var(--nx-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .nx-office-info h5 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+        }
+
+        .nx-office-info p {
+            font-size: 14px;
+            color: var(--gray-500);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .nx-office-info a {
+            color: var(--nx-green);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nx-office-info a:hover {
+            text-decoration: underline;
+        }
+
+        /* CTA */
+        .nx-cta {
+            padding: 64px 0;
+            background: var(--nx-green);
+            text-align: center;
+        }
+
+        .nx-cta h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--nx-white);
+            margin-bottom: 24px;
+        }
+
+        .nx-cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--nx-white);
+            color: var(--nx-green);
+            border: none;
+            border-radius: 8px;
+            padding: 14px 32px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .nx-cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            color: var(--nx-green-dark);
+            text-decoration: none;
+        }
+
+        /* Footer */
+        .nx-footer {
+            background: var(--nx-charcoal);
+            color: var(--nx-white);
+            padding: 60px 0 24px;
+        }
+
+        .nx-footer-link {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .nx-footer-link:hover {
+            color: var(--nx-white);
+            text-decoration: underline;
+        }
+
+        .nx-social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-size: 16px;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .nx-social-link:hover {
+            background: var(--nx-green);
+            color: var(--nx-white);
+            text-decoration: none;
+        }
+
+        /* Back to Top */
+        .nx-back-top {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--nx-green);
+            color: var(--nx-white);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(16px);
+            transition: all 0.3s ease;
+            z-index: 999;
+            box-shadow: 0 4px 16px rgba(22, 74, 54, 0.3);
+        }
+
+        .nx-back-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .nx-back-top:hover {
+            background: var(--nx-green-dark);
+            transform: translateY(-2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 991.98px) {
+            .nx-page-hero { padding: 110px 0 48px; }
+            .nx-page-hero h1 { font-size: 38px; }
+            .nx-mv, .nx-story, .nx-values, .nx-leadership, .nx-stats, .nx-office { padding: 60px 0; }
+            .nx-section-title { font-size: 30px; }
+        }
+
+        @media (max-width: 767.98px) {
+            .nx-navbar { height: 56px; }
+            .nx-page-hero { padding: 100px 0 40px; }
+            .nx-page-hero h1 { font-size: 30px; }
+            .nx-page-hero p { font-size: 15px; }
+            .nx-mv, .nx-story, .nx-values, .nx-leadership, .nx-stats, .nx-office { padding: 48px 0; }
+            .nx-section-title { font-size: 26px; }
+            .nx-stat-number { font-size: 36px; }
+            .nx-ceo-card { flex-direction: column; text-align: center; gap: 24px; }
+            .nx-ceo-img { width: 120px; height: 120px; min-width: 120px; border-radius: 16px; }
+            .nx-ceo-quote .bi-quote { left: 50%; transform: translateX(-50%); }
+            .nx-ceo-quote-text { padding-left: 0; font-size: 16px; text-align: center; }
+            .nx-ceo-name, .nx-ceo-title { padding-left: 0; text-align: center; }
+            .nx-cta { padding: 48px 0; }
+            .nx-cta h3 { font-size: 24px; }
+            .nx-footer { padding: 48px 0 20px; }
+            .nx-back-top { bottom: 20px; right: 20px; width: 42px; height: 42px; font-size: 18px; }
+        }
+
+        @media (max-width: 575.98px) {
+            .nx-page-hero { padding: 92px 0 32px; }
+            .nx-page-hero h1 { font-size: 26px; }
+            .nx-mv-card { padding: 28px 24px; }
+            .nx-story-img { max-width: 100%; }
+            .nx-stat-number { font-size: 32px; }
+            .nx-ceo-img { width: 100px; height: 100px; min-width: 100px; }
+            .nx-ceo-quote-text { font-size: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark nx-navbar fixed-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+                <img src="images/logo.png" alt="Next360 Logo" width="40" height="40" class="rounded-circle">
+                <span class="fw-bold fs-5 nx-brand-text">NEXT360</span>
+            </a>
+
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="about.html">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="products.html">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../career/next360/index.html">Careers</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="contact.html">Contact</a>
+                    </li>
+                </ul>
+
+                <div class="d-flex align-items-center gap-3">
+                    <a href="../career/next360/index.html" class="nx-btn-primary d-none d-md-inline-flex align-items-center gap-1">
+                        Explore Careers <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 2. Page Hero -->
+    <section class="nx-page-hero">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">About</li>
+                </ol>
+            </nav>
+            <h1>About Next360</h1>
+            <p>Our story, our mission, and the people behind India's organic revolution.</p>
+        </div>
+    </section>
+
+    <!-- 3. Mission & Vision -->
+    <section class="nx-mv">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="nx-mv-card mission">
+                        <div class="nx-mv-icon">
+                            <i class="bi bi-bullseye"></i>
+                        </div>
+                        <h3>Our Mission</h3>
+                        <p>To make certified organic products accessible to every Indian household, ensuring purity, sustainability, and affordability at every step.</p>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="nx-mv-card vision">
+                        <div class="nx-mv-icon">
+                            <i class="bi bi-eye"></i>
+                        </div>
+                        <h3>Our Vision</h3>
+                        <p>To become India's most trusted organic brand, setting global standards for quality, sustainability, and community impact.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Our Story -->
+    <section class="nx-story">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-7">
+                    <h2 class="nx-section-title mb-4">Our Story</h2>
+                    <div class="nx-story-text">
+                        <p>In 2018, what started as a small team of passionate organic enthusiasts in Hyderabad has grown into one of India's fastest-growing organic product companies. Our founder recognized that while demand for organic products was rising, trust and accessibility remained major barriers.</p>
+                        <p>We set out to change that — building a vertically integrated supply chain that works directly with farmers, ensures rigorous quality testing, and delivers products that families can trust completely.</p>
+                        <p>Today, Next360 serves over 10 million customers across 50+ cities, with a product range spanning organic foods, health supplements, personal care, and home essentials. Every product we create reflects our unwavering commitment to purity, quality, and sustainability.</p>
+                    </div>
+                </div>
+                <div class="col-lg-5 text-center">
+                    <img src="images/logo.png" alt="Next360 Organic Products" class="nx-story-img img-fluid">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Values Section -->
+    <section class="nx-values">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="nx-section-title">Our Core Values</h2>
+                <p class="nx-section-subtitle mx-auto">The principles that guide every decision we make</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="nx-value-card">
+                        <div class="nx-value-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h5>Quality Without Compromise</h5>
+                        <p>Every product undergoes 100+ quality checks. We never cut corners.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="nx-value-card">
+                        <div class="nx-value-icon">
+                            <i class="bi bi-heart"></i>
+                        </div>
+                        <h5>Customer First</h5>
+                        <p>Our customers' health and trust drive every decision we make.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="nx-value-card">
+                        <div class="nx-value-icon">
+                            <i class="bi bi-recycle"></i>
+                        </div>
+                        <h5>Sustainability Always</h5>
+                        <p>From sourcing to packaging, we minimize environmental impact.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="nx-value-card">
+                        <div class="nx-value-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h5>People Power Our Growth</h5>
+                        <p>Our 500+ team members are the heart of everything we achieve.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Leadership / CEO Section -->
+    <section class="nx-leadership">
+        <div class="container text-center">
+            <h2 class="nx-section-title mb-5" style="color:#fff;">Leadership</h2>
+            <div class="nx-ceo-card">
+                <img src="images/ceo.png" alt="Founder & CEO, Next360" class="nx-ceo-img">
+                <div class="nx-ceo-quote">
+                    <i class="bi bi-quote"></i>
+                    <p class="nx-ceo-quote-text">At Next360, we believe that organic isn't just a label — it's a commitment to quality, sustainability, and the health of every family we serve.</p>
+                </div>
+                <div class="nx-ceo-name">Founder &amp; CEO</div>
+                <div class="nx-ceo-title">Next360 Organic Products</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. By the Numbers -->
+    <section class="nx-stats">
+        <div class="container">
+            <h2 class="nx-section-title text-center mb-5" style="color:#fff;">Next360 by the Numbers</h2>
+            <div class="row text-center g-4">
+                <div class="col-6 col-lg-3">
+                    <div class="nx-stat-number">500+</div>
+                    <div class="nx-stat-label">Team Members</div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="nx-stat-number">50+</div>
+                    <div class="nx-stat-label">Cities</div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="nx-stat-number">100+</div>
+                    <div class="nx-stat-label">Products</div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="nx-stat-number">10M+</div>
+                    <div class="nx-stat-label">Customers</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. Office Location -->
+    <section class="nx-office">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="nx-section-title">Where We're Based</h2>
+                <p class="nx-section-subtitle mx-auto">Visit us at our headquarters in Hyderabad</p>
+            </div>
+            <div class="row g-4 justify-content-center">
+                <div class="col-lg-4 col-md-6">
+                    <div class="nx-office-card">
+                        <div class="nx-office-icon">
+                            <i class="bi bi-geo-alt"></i>
+                        </div>
+                        <div class="nx-office-info">
+                            <h5>Address</h5>
+                            <p>T-Hub Phase 2, Inorbit Mall Road, Hyderabad, Telangana 500081, India</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="nx-office-card">
+                        <div class="nx-office-icon">
+                            <i class="bi bi-envelope"></i>
+                        </div>
+                        <div class="nx-office-info">
+                            <h5>Email</h5>
+                            <p><a href="mailto:office@next360.in">office@next360.in</a></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="nx-office-card">
+                        <div class="nx-office-icon">
+                            <i class="bi bi-telephone"></i>
+                        </div>
+                        <div class="nx-office-info">
+                            <h5>Phone</h5>
+                            <p><a href="tel:+918008253003">+91 80082 53003</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. CTA Banner -->
+    <section class="nx-cta">
+        <div class="container">
+            <h3>Want to Join Our Team?</h3>
+            <a href="../career/next360/index.html" class="nx-cta-btn">
+                View Careers <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- 10. Footer -->
+    <footer class="nx-footer">
+        <div class="container">
+            <div class="row g-4 gy-5">
+                <div class="col-lg-4 col-md-6">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <img src="images/logo.png" alt="Next360 Logo" width="36" height="36" class="rounded-circle">
+                        <span class="fw-bold fs-5 text-white">NEXT360</span>
+                    </div>
+                    <p class="text-white-50 mb-3" style="font-size:14px;max-width:320px;">Empowering healthier lifestyles through certified organic products. From farm to table, we deliver purity you can trust.</p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="nx-social-link" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="nx-social-link" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="nx-social-link" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+                        <a href="#" class="nx-social-link" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" class="nx-social-link" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="text-white fw-bold mb-3" style="font-size:14px;">Company</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a href="about.html" class="nx-footer-link">About Us</a></li>
+                        <li class="mb-2"><a href="#" class="nx-footer-link">Leadership</a></li>
+                        <li class="mb-2"><a href="#" class="nx-footer-link">Life at Next360</a></li>
+                        <li class="mb-2"><a href="contact.html" class="nx-footer-link">Contact</a></li>
+                        <li class="mb-2"><a href="#" class="nx-footer-link">Blog</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="text-white fw-bold mb-3" style="font-size:14px;">Careers</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a href="../career/next360/index.html" class="nx-footer-link">Open Positions</a></li>
+                        <li class="mb-2"><a href="#" class="nx-footer-link">Internship Program</a></li>
+                        <li class="mb-2"><a href="#" class="nx-footer-link">Benefits &amp; Perks</a></li>
+                        <li class="mb-2"><a href="#" class="nx-footer-link">Interview Process</a></li>
+                        <li class="mb-2"><a href="#" class="nx-footer-link">FAQs</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="text-white fw-bold mb-3" style="font-size:14px;">Contact</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex align-items-start gap-2 mb-2">
+                            <i class="bi bi-geo-alt text-white-50 mt-1" style="font-size:13px;"></i>
+                            <span class="text-white-50" style="font-size:13px;">Next360 Organic Products Pvt. Ltd.<br>T-Hub Phase 2, Inorbit Mall Road, Hyderabad, Telangana</span>
+                        </li>
+                        <li class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-envelope text-white-50" style="font-size:13px;"></i>
+                            <a href="mailto:office@next360.in" class="nx-footer-link">office@next360.in</a>
+                        </li>
+                        <li class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-telephone text-white-50" style="font-size:13px;"></i>
+                            <a href="tel:+918008253003" class="nx-footer-link">+91 80082 53003</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="border-secondary mt-5 mb-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center pb-3">
+                <p class="text-white-50 mb-0" style="font-size:13px;">&copy; 2026 Next360 Organic Products Pvt. Ltd. All rights reserved.</p>
+                <div class="d-flex gap-3">
+                    <a href="#" class="nx-footer-link" style="font-size:13px;">Privacy Policy</a>
+                    <a href="#" class="nx-footer-link" style="font-size:13px;">Terms of Service</a>
+                    <a href="#" class="nx-footer-link" style="font-size:13px;">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 11. Back to Top -->
+    <button class="nx-back-top" id="backToTop" aria-label="Back to top">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="main.js"></script>
+    <script>
+        /* Navbar scroll effect */
+        const navbar = document.querySelector('.nx-navbar');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 10);
+        });
+
+        /* Back to Top */
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            backToTop.classList.toggle('visible', window.scrollY > 400);
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
