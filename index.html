@@ -858,18 +858,6 @@ function handleLogin(e) {
         err.style.display = 'block';
         return;
     }
-    if (user.role !== 'CEO' && user.role !== 'CTO') {
-        const now = new Date();
-        const totalMinutes = now.getHours() * 60 + now.getMinutes();
-        const loginStart = 10 * 60;
-        const loginEnd = 10 * 60 + 20;
-        if (totalMinutes < loginStart || totalMinutes > loginEnd) {
-            const err = document.getElementById('loginError');
-            err.textContent = 'Employee login is only allowed between 10:00 AM and 10:20 AM.';
-            err.style.display = 'block';
-            return;
-        }
-    }
     currentUser = user;
     localStorage.setItem('nxt360_session', JSON.stringify(currentUser));
     document.getElementById('loginPage').style.display = 'none';
@@ -953,8 +941,14 @@ function initDashboard(freshLogin) {
     }
 
     if (freshLogin && currentUser.role !== 'CEO') {
+        const now = new Date();
+        const totalMinutes = now.getHours() * 60 + now.getMinutes();
+        const isLate = totalMinutes > 10 * 60 + 20;
+        const msg = isLate
+            ? `${currentUser.name} logged in late (after 10:20 AM) — no check-in available`
+            : `${currentUser.name} has logged in`;
         USERS().filter(u => u.role === 'CEO').forEach(u => {
-            createNotification(u.email, 'employee_login', `${currentUser.name} has logged in`, { from: currentUser.name, fromRole: currentUser.role });
+            createNotification(u.email, 'employee_login', msg, { from: currentUser.name, fromRole: currentUser.role });
         });
     }
 
@@ -967,6 +961,13 @@ function initDashboard(freshLogin) {
         setTimeout(() => openSelfieModal('login'), 500);
     } else {
         loginSelfiePending = false;
+        if (currentUser.role !== 'CEO' && currentUser.role !== 'CTO') {
+            const now = new Date();
+            const totalMinutes = now.getHours() * 60 + now.getMinutes();
+            if (totalMinutes > 10 * 60 + 20) {
+                setTimeout(() => showToast('⚠️ Late Login', 'You logged in after 10:20 AM. Check-in is not available today.'), 1500);
+            }
+        }
     }
 }
 
@@ -1032,6 +1033,12 @@ function checkOut() {
     } else { alert('You need to check in first!'); }
 }
 
+function isCheckInAllowed() {
+    const now = new Date();
+    const totalMinutes = now.getHours() * 60 + now.getMinutes();
+    return totalMinutes >= 10 * 60 && totalMinutes <= 10 * 60 + 20;
+}
+
 function updateCheckButtons() {
     const tk = todayKey();
     const records = getData('records', {});
@@ -1043,10 +1050,18 @@ function updateCheckButtons() {
         document.getElementById('btnCheckOut').style.opacity = '0.5';
         return;
     }
-    document.getElementById('btnCheckIn').disabled = !!(rec && rec.checkIn);
-    document.getElementById('btnCheckOut').disabled = !(rec && rec.checkIn && !rec.checkOut);
-    document.getElementById('btnCheckIn').style.opacity = (rec && rec.checkIn) ? '0.5' : '1';
-    document.getElementById('btnCheckOut').style.opacity = (rec && rec.checkIn && !rec.checkOut) ? '1' : '0.5';
+    const alreadyCheckedIn = !!(rec && rec.checkIn);
+    const notCheckedOut = rec && rec.checkIn && !rec.checkOut;
+    const checkInDisabled = alreadyCheckedIn || !isCheckInAllowed();
+    document.getElementById('btnCheckIn').disabled = checkInDisabled;
+    document.getElementById('btnCheckOut').disabled = !notCheckedOut;
+    document.getElementById('btnCheckIn').style.opacity = checkInDisabled ? '0.5' : '1';
+    document.getElementById('btnCheckOut').style.opacity = notCheckedOut ? '1' : '0.5';
+    if (!isCheckInAllowed() && !alreadyCheckedIn) {
+        document.getElementById('btnCheckIn').title = 'Check-in window closed (10:00 - 10:20 AM)';
+    } else {
+        document.getElementById('btnCheckIn').title = '';
+    }
 }
 
 // ============ TODAY TABLE ============
