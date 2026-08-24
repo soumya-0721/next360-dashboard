@@ -882,6 +882,8 @@ function handleLogout() {
 }
 
 function forceLogout() {
+    stopSelfieStream();
+    document.getElementById('selfieModal').classList.remove('open');
     const tk = todayKey();
     const records = getData('records', {});
     if (!records[tk]) records[tk] = {};
@@ -892,6 +894,8 @@ function forceLogout() {
     setData('records', records);
     currentUser = null;
     localStorage.removeItem('nxt360_session');
+    loginSelfiePending = false;
+    selfieCaptured = false;
     document.getElementById('loginPage').style.display = 'flex';
     document.getElementById('dashboardPage').style.display = 'none';
     document.getElementById('loginEmail').value = '';
@@ -1980,8 +1984,12 @@ function openSelfieModal(type) {
     const camArea = document.getElementById('selfieCamArea');
     camArea.innerHTML = '<div class="selfie-preview" id="selfiePreviewArea"><video id="selfieVideo" autoplay playsinline muted></video><canvas id="selfieCanvas"></canvas></div>';
 
+    const noCamBtn = type === 'logout'
+        ? '<button class="btn btn-danger btn-sm" style="margin-top:12px" onclick="forceLogout()">🚪 Logout Without Selfie</button>'
+        : '<button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="backToLogin()">⬅️ Back to Login</button>';
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        camArea.innerHTML = '<div class="selfie-no-cam"><div class="icon">📷</div><p>Camera not available. Selfie is mandatory to use the dashboard.</p><button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="backToLogin()">⬅️ Back to Login</button></div>';
+        camArea.innerHTML = '<div class="selfie-no-cam"><div class="icon">📷</div><p>Camera not available.' + (type === 'login' ? ' Selfie is mandatory to use the dashboard.' : '') + '</p>' + noCamBtn + '</div>';
         return;
     }
 
@@ -1996,7 +2004,7 @@ function openSelfieModal(type) {
             })
             .catch(err => {
                 console.log('Camera error:', err);
-                camArea.innerHTML = '<div class="selfie-no-cam"><div class="icon">📷</div><p>Camera permission denied. Selfie is mandatory to use the dashboard.</p><button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="backToLogin()">⬅️ Back to Login</button></div>';
+                camArea.innerHTML = '<div class="selfie-no-cam"><div class="icon">📷</div><p>Camera permission denied.' + (type === 'login' ? ' Selfie is mandatory to use the dashboard.' : '') + '</p>' + noCamBtn + '</div>';
             });
     }, 300);
 }
