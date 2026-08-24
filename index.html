@@ -191,19 +191,22 @@
 
         /* Birthday */
         .bday-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-        .bday-card { background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 14px; padding: 20px; text-align: center; position: relative; overflow: hidden; }
-        .bday-card.upcoming { background: linear-gradient(135deg, #d1fae5, #a7f3d0); border: 2px solid var(--primary); }
-        .bday-card.today { background: linear-gradient(135deg, #fce7f3, #fbcfe8); border: 2px solid #ec4899; animation: pulse 2s infinite; }
+        .bday-card { border-radius: 14px; position: relative; overflow: hidden; height: 260px; cursor: default; }
+        .bday-card.upcoming { border: 2px solid var(--primary); }
+        .bday-card.today { border: 2px solid #ec4899; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
-        .bday-card .emoji { font-size: 36px; margin-bottom: 8px; }
-        .bday-card .bname { font-size: 15px; font-weight: 700; }
-        .bday-card .brole { font-size: 11px; color: var(--text-light); margin-top: 2px; }
-        .bday-card .bdate { font-size: 12px; margin-top: 8px; padding: 4px 12px; background: white; border-radius: 20px; display: inline-block; }
-        .bday-card .countdown { font-size: 13px; font-weight: 700; color: var(--primary-dark); margin-top: 8px; }
-        .bday-confetti { position: absolute; top: 0; left: 0; right: 0; font-size: 20px; animation: confetti 1s infinite; pointer-events: none; }
+        .bday-card .bday-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+        .bday-card .bday-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 40px 16px 16px; color: white; }
+        .bday-card .bday-overlay .bname { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+        .bday-card .bday-overlay .brole { font-size: 11px; opacity: 0.85; margin-bottom: 6px; }
+        .bday-card .bday-overlay .bdate { font-size: 12px; padding: 3px 10px; background: rgba(255,255,255,0.2); border-radius: 20px; display: inline-block; backdrop-filter: blur(4px); }
+        .bday-card .bday-overlay .countdown { font-size: 12px; font-weight: 700; margin-top: 6px; }
+        .bday-card.today .bday-overlay .countdown { color: #fbcfe8; }
+        .bday-card.upcoming .bday-overlay .countdown { color: #a7f3d0; }
+        .bday-confetti { position: absolute; top: 0; left: 0; right: 0; font-size: 20px; animation: confetti 1s infinite; pointer-events: none; z-index: 2; }
         @keyframes confetti { 0% { transform: translateY(-10px); opacity: 1; } 100% { transform: translateY(-40px); opacity: 0; } }
         .bday-widget { background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 14px; padding: 20px 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; border: 2px solid #f59e0b; position: relative; overflow: hidden; }
-        .bday-widget .cake-icon { font-size: 48px; flex-shrink: 0; }
+        .bday-widget .bday-widget-img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-shrink: 0; }
         .bday-widget .bday-info h4 { font-size: 16px; font-weight: 700; color: #92400e; margin-bottom: 4px; }
         .bday-widget .bday-info p { font-size: 13px; color: #b45309; line-height: 1.5; }
         .bday-widget .bday-info .countdown-badge { display: inline-block; background: #f59e0b; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-top: 6px; }
@@ -269,14 +272,160 @@
         .settings-card .s-field input:focus, .settings-card .s-field select:focus { border-color: var(--primary); }
         .settings-card .s-actions { display: flex; gap: 8px; margin-top: 12px; }
         .settings-card .s-delete { margin-left: auto; }
+        /* Selfie Modal */
+        .selfie-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 600; align-items: center; justify-content: center; }
+        .selfie-modal.open ~ * { pointer-events: none; }
+        .selfie-modal.open { display: flex; }
+        .selfie-box { background: var(--card); border-radius: 20px; padding: 32px; width: 480px; max-width: 95vw; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .selfie-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .selfie-box p { font-size: 13px; color: var(--text-light); margin-bottom: 16px; }
+        .selfie-preview { width: 320px; height: 240px; border-radius: 14px; background: #000; margin: 0 auto 16px; overflow: hidden; position: relative; }
+        .selfie-preview video, .selfie-preview canvas { width: 100%; height: 100%; object-fit: cover; }
+        .selfie-preview canvas { display: none; }
+        .selfie-captured { display: none; width: 320px; height: 240px; border-radius: 14px; margin: 0 auto 16px; }
+        .selfie-captured img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; }
+        .selfie-actions { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+        .selfie-no-cam { padding: 40px; background: var(--bg); border-radius: 14px; margin-bottom: 16px; }
+        .selfie-no-cam .icon { font-size: 48px; margin-bottom: 8px; }
+        .selfie-no-cam p { font-size: 13px; color: var(--text-light); }
+        .selfie-thumb { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; border: 2px solid var(--border); cursor: pointer; transition: border-color 0.2s; }
+        .selfie-thumb:hover { border-color: var(--primary); }
+        .selfie-thumbs { display: flex; gap: 6px; align-items: center; }
+        .selfie-type-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .selfie-type-login { background: var(--primary-light); color: var(--primary-dark); }
+        .selfie-type-logout { background: #fee2e2; color: #991b1b; }
+
+        /* Task Management */
+        .task-row { display: flex; gap: 10px; align-items: start; background: white; border: 2px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; position: relative; }
+        .task-row .task-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .task-row input, .task-row textarea { width: 100%; padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; outline: none; resize: vertical; }
+        .task-row input:focus, .task-row textarea:focus { border-color: var(--primary); }
+        .task-row .task-remove { background: var(--danger); color: white; border: none; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 16px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .task-card { background: var(--bg); border-radius: 10px; padding: 14px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+        .task-card .task-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+        .task-card .task-detail { font-size: 12px; color: var(--text-light); margin-bottom: 4px; }
+        .task-card .task-detail strong { color: var(--text); }
+        .task-card .task-detail.planned { border-left: 3px solid var(--info); padding-left: 8px; }
+        .task-card .task-detail.completed { border-left: 3px solid var(--primary); padding-left: 8px; }
+        .task-card .task-detail.blockers { border-left: 3px solid var(--warning); padding-left: 8px; }
+        .task-progress { height: 8px; background: var(--border); border-radius: 4px; margin-top: 8px; overflow: hidden; }
+        .task-progress-bar { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+        .task-progress-bar.full { background: var(--primary); }
+        .task-progress-bar.partial { background: var(--warning); }
+        .task-progress-bar.low { background: var(--danger); }
+        .badge-completed { background: var(--primary-light); color: var(--primary-dark); }
+        .badge-partial { background: #fef3c7; color: #92400e; }
+        .badge-blocked { background: #fee2e2; color: #991b1b; }
+        .badge-not-started { background: var(--border); color: var(--text-light); }
+
+        /* Approval System */
+        .approval-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--bg); border-radius: 10px; padding: 4px; }
+        .approval-tabs button { padding: 8px 14px; border: none; background: transparent; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-light); transition: all 0.2s; }
+        .approval-tabs button.active { background: var(--primary); color: white; }
+        .approval-card { background: var(--bg); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 2px solid var(--border); transition: border-color 0.2s; }
+        .approval-card:hover { border-color: var(--primary); }
+        .approval-card .approval-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .approval-card .approval-meta { font-size: 12px; color: var(--text-light); margin-bottom: 6px; }
+        .approval-card .approval-body { font-size: 13px; line-height: 1.5; margin-bottom: 10px; }
+        .approval-card .approval-actions { display: flex; gap: 8px; }
+        .badge-approved { background: var(--primary-light); color: var(--primary-dark); }
+        .badge-rejected { background: #fee2e2; color: #991b1b; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+
+        .expense-form, .doc-form { background: var(--bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .expense-form .form-row, .doc-form .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+        .expense-form .form-row .form-group, .doc-form .form-row .form-group { flex: 1; min-width: 160px; margin-bottom: 0; }
+        .expense-form textarea, .doc-form textarea { width: 100%; padding: 10px 12px; border: 2px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; outline: none; resize: vertical; min-height: 60px; }
+        .expense-form textarea:focus, .doc-form textarea:focus { border-color: var(--primary); }
+
+        /* Profile */
+        .profile-card { background: linear-gradient(135deg, #064e3b, #10b981); border-radius: 20px; padding: 32px; color: white; margin-bottom: 24px; display: flex; gap: 24px; align-items: center; }
+        .profile-avatar-lg { width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 4px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; flex-shrink: 0; }
+        .profile-info h2 { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+        .profile-info .profile-role { font-size: 14px; opacity: 0.9; margin-bottom: 8px; }
+        .profile-info .profile-detail { font-size: 13px; opacity: 0.8; margin-bottom: 2px; }
+        .profile-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .profile-stat { background: var(--card); border-radius: 12px; padding: 16px; text-align: center; box-shadow: var(--shadow); }
+        .profile-stat .ps-value { font-size: 28px; font-weight: 800; color: var(--primary); }
+        .profile-stat .ps-label { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+        .profile-activity { background: var(--card); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); }
+        .activity-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: center; }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .activity-text { font-size: 13px; flex: 1; }
+        .activity-time { font-size: 11px; color: var(--text-light); }
+        .profile-edit-form { background: var(--card); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .profile-edit-form .form-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .profile-edit-form .form-row .form-group { flex: 1; min-width: 180px; }
+        .employee-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .employee-mini-card { background: var(--bg); border-radius: 12px; padding: 16px; border: 2px solid var(--border); cursor: pointer; transition: all 0.2s; }
+        .employee-mini-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .employee-mini-card .em-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .employee-mini-card .em-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+        .employee-mini-card .em-name { font-size: 14px; font-weight: 700; }
+        .employee-mini-card .em-role { font-size: 11px; color: var(--text-light); }
+        .employee-mini-card .em-stats { display: flex; gap: 12px; font-size: 12px; color: var(--text-light); }
+
+        /* Payroll */
+        .payroll-header { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+        .payroll-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .payroll-summary .ps-card { background: var(--bg); border-radius: 12px; padding: 16px; text-align: center; }
+        .payroll-summary .ps-card .ps-val { font-size: 24px; font-weight: 800; }
+        .payroll-summary .ps-card .ps-lbl { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+        .payroll-table td.salary { font-weight: 700; color: var(--primary-dark); }
+        .salary-input { width: 120px; padding: 6px 10px; border: 2px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; outline: none; text-align: right; }
+        .salary-input:focus { border-color: var(--primary); }
+        @media print { .no-print { display: none !important; } .payroll-table { font-size: 12px; } }
+
         @media (max-width: 768px) {
-            .topbar { padding: 0 16px; }
-            .main { padding: 16px; }
-            .welcome-banner { flex-direction: column; gap: 16px; text-align: center; }
-            .welcome-banner .clock-big { font-size: 32px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            table { font-size: 12px; }
-            td, th { padding: 8px 6px; }
+            .topbar { padding: 0 12px; height: auto; min-height: 56px; flex-wrap: wrap; gap: 8px; padding-top: 8px; padding-bottom: 8px; }
+            .topbar-left { gap: 8px; }
+            .topbar-left img { width: 30px; height: 30px; border-radius: 8px; }
+            .topbar-left h2 { font-size: 14px; }
+            .topbar-left span { font-size: 10px; }
+            .topbar-right { gap: 8px; flex-wrap: wrap; }
+            .topbar-right .clock { font-size: 11px; }
+            .user-badge { padding: 4px 10px 4px 6px; gap: 6px; }
+            .user-badge img { width: 28px; height: 28px; }
+            .user-badge .info .name { font-size: 11px; }
+            .user-badge .info .role { font-size: 9px; }
+            .main { padding: 12px; }
+            .welcome-banner { flex-direction: column; gap: 12px; text-align: center; padding: 20px 16px; }
+            .welcome-banner h2 { font-size: 17px; }
+            .welcome-banner p { font-size: 12px; }
+            .welcome-banner .clock-big { font-size: 28px; }
+            .welcome-banner .date-big { font-size: 11px; text-align: center; }
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .stat-card { padding: 14px; }
+            .stat-card .stat-value { font-size: 22px; }
+            .actions-row { gap: 8px; }
+            .actions-row .btn { flex: 1; min-width: 120px; justify-content: center; font-size: 13px; padding: 12px 16px; }
+            .section { padding: 14px; border-radius: 12px; overflow-x: auto; }
+            .section-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+            .tabs { gap: 2px; padding: 3px; }
+            .tabs button { padding: 8px 10px; font-size: 11px; }
+            table { min-width: 600px; }
+            td, th { padding: 8px 6px; font-size: 12px; }
+            .badge { padding: 3px 8px; font-size: 10px; }
+            .profile-card { flex-direction: column; text-align: center; }
+            .profile-stats { flex-wrap: wrap; }
+            .notif-dropdown { width: calc(100vw - 24px); right: -12px; }
+            .chart-grid { grid-template-columns: 1fr; }
+            .bday-grid { grid-template-columns: 1fr; }
+            .settings-grid { grid-template-columns: 1fr; }
+            .login-box { padding: 28px 20px; }
+            .login-logo img.logo-img { width: 60px; height: 60px; }
+            .login-logo h1 { font-size: 18px; }
+            .quick-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .stat-card .stat-value { font-size: 20px; }
+            .actions-row { flex-direction: column; }
+            .actions-row .btn { min-width: 100%; }
+            .welcome-banner .clock-big { font-size: 24px; }
+            .tabs { overflow-x: auto; flex-wrap: nowrap; }
         }
     </style>
 </head>
@@ -349,7 +498,7 @@
         <div class="welcome-banner">
             <div>
                 <h2 id="welcomeMsg">Good Morning!</h2>
-                <p>Office timings: 10:00 AM — 5:00 PM</p>
+                <p>Office timings: 10:00 AM — 6:00 PM</p>
             </div>
             <div style="text-align:right">
                 <div class="clock-big" id="bigClock"></div>
@@ -372,7 +521,7 @@
                 <div class="clock" id="officeStatus"></div>
             </div>
             <table>
-                <thead><tr><th>Name</th><th>Role</th><th>Check In</th><th>Check Out</th><th>Status</th></tr></thead>
+                <thead><tr><th>Name</th><th>Role</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Selfie</th></tr></thead>
                 <tbody id="todayTable"></tbody>
             </table>
         </div>
@@ -399,7 +548,7 @@
                 <button class="btn btn-primary btn-sm" onclick="markLeave()">Mark Leave</button>
             </div>
             <table>
-                <thead><tr><th>Date</th><th>Name</th><th>Type</th><th>Reason</th><th>Marked By</th></tr></thead>
+                <thead><tr><th>Date</th><th>Name</th><th>Type</th><th>Reason</th><th>Marked By</th><th>Status</th></tr></thead>
                 <tbody id="leaveTable"></tbody>
             </table>
         </div>
@@ -501,6 +650,81 @@
             </div>
             <div id="settingsContent"></div>
         </div>
+
+        <div class="section hidden" id="panelApprovals">
+            <div class="section-header">
+                <h3>✅ Approvals</h3>
+            </div>
+            <div class="approval-tabs" id="approvalTabs">
+                <button class="active" onclick="switchApprovalTab('leaves',this)">🏖️ Leaves</button>
+                <button onclick="switchApprovalTab('expenses',this)">💰 Expenses</button>
+                <button onclick="switchApprovalTab('documents',this)">📄 Documents</button>
+            </div>
+            <div id="approvalLeaveSection">
+                <div id="approvalLeaveList"></div>
+            </div>
+            <div id="approvalExpenseSection" class="hidden">
+                <div class="expense-form" id="expenseFormArea"></div>
+                <div id="approvalExpenseList"></div>
+            </div>
+            <div id="approvalDocSection" class="hidden">
+                <div class="doc-form" id="docFormArea"></div>
+                <div id="approvalDocList"></div>
+            </div>
+        </div>
+
+        <div class="section hidden" id="panelProfile">
+            <div id="profileContent"></div>
+        </div>
+
+        <div class="section hidden" id="panelPayroll">
+            <div class="section-header">
+                <h3>💰 Payroll — Monthly Calculation</h3>
+                <div class="no-print" style="display:flex;gap:8px;align-items:center;">
+                    <select id="payrollMonth" onchange="renderPayroll()"></select>
+                    <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Print</button>
+                </div>
+            </div>
+            <div class="payroll-summary" id="payrollSummary"></div>
+            <div style="overflow-x:auto">
+                <table class="payroll-table">
+                    <thead><tr><th>Name</th><th>Role</th><th>Working Days</th><th>Present</th><th>Absent</th><th>Leaves</th><th>Net Days</th><th class="no-print">Salary (₹)</th><th>Earned (₹)</th><th>Deduction (₹)</th><th>Net Pay (₹)</th></tr></thead>
+                    <tbody id="payrollTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section hidden" id="panelSelfies">
+            <div class="section-header">
+                <h3>📸 Login / Logout Selfies</h3>
+                <select id="selfieDateFilter" onchange="renderSelfies()"><option value="today">Today</option><option value="all">All (2 days)</option></select>
+            </div>
+            <div id="selfiesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Selfie Capture Modal -->
+<div class="selfie-modal" id="selfieModal">
+    <div class="selfie-box">
+        <h3 id="selfieTitle">📸 Capture Login Selfie</h3>
+        <p id="selfieSubtitle">This selfie is required for attendance verification</p>
+        <div id="selfieCamArea">
+            <div class="selfie-preview" id="selfiePreviewArea">
+                <video id="selfieVideo" autoplay playsinline></video>
+                <canvas id="selfieCanvas"></canvas>
+            </div>
+        </div>
+        <div class="selfie-captured" id="selfieCaptured" style="display:none;">
+            <img id="selfieCapturedImg" src="" alt="captured">
+        </div>
+        <div class="selfie-actions" id="selfieActions">
+            <button class="btn btn-primary" id="btnCaptureSelfie" onclick="captureSelfie()">📸 Capture</button>
+        </div>
+        <div class="selfie-actions" id="selfieRetakeActions" style="display:none;">
+            <button class="btn btn-primary" onclick="retakeSelfie()">🔄 Retake</button>
+            <button class="btn btn-primary" style="background:#059669" onclick="confirmSelfie()">✅ Confirm</button>
+        </div>
     </div>
 </div>
 
@@ -530,7 +754,7 @@ function getUsers() { return JSON.parse(localStorage.getItem('nxt360_users') || 
 function setUsers(u) { localStorage.setItem('nxt360_users', JSON.stringify(u)); }
 function USERS() { return getUsers(); }
 
-let currentUser = null;
+let currentUser = JSON.parse(localStorage.getItem('nxt360_session') || 'null');
 
 // ============ STORAGE ============
 function getData(k, fb) { try { const v = localStorage.getItem('nxt360_' + k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
@@ -548,6 +772,8 @@ function getTabs() {
         { id: 'monthly', label: '📊 Monthly Report', panels: ['panelMonthly'] },
         { id: 'leave', label: '🏖️ Leave Management', panels: ['panelLeave'] },
         { id: 'work', label: '📝 Work Updates', panels: ['panelWork'] },
+        { id: 'approvals', label: '✅ Approvals', panels: ['panelApprovals'] },
+        { id: 'profile', label: '👤 My Profile', panels: ['panelProfile'] },
         { id: 'charts', label: '📈 Productivity Charts', panels: ['panelCharts'] },
         { id: 'birthday', label: '🎂 Birthdays', panels: ['panelBirthday'] },
         { id: 'chat', label: '💬 Team Chat', panels: ['panelChat'] },
@@ -555,6 +781,8 @@ function getTabs() {
     if (canSeeAll()) {
         tabs.push({ id: 'review', label: '🔍 Review Updates', panels: ['panelReview'] });
         tabs.push({ id: 'team', label: '👥 Team Overview', panels: ['panelTeam'] });
+        tabs.push({ id: 'payroll', label: '💰 Payroll', panels: ['panelPayroll'] });
+        tabs.push({ id: 'selfies', label: '📸 Selfies', panels: ['panelSelfies'] });
     }
     if (currentUser.role === 'CEO') {
         tabs.push({ id: 'settings', label: '⚙️ Settings', panels: ['panelSettings'] });
@@ -571,7 +799,7 @@ function renderTabs() {
 function switchTab(tab, btn, panels) {
     document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['panelToday', 'panelMonthly', 'panelLeave', 'panelWork', 'panelReview', 'panelTeam', 'panelCharts', 'panelBirthday', 'panelChat', 'panelSettings'].forEach(id => {
+    ['panelToday', 'panelMonthly', 'panelLeave', 'panelWork', 'panelReview', 'panelTeam', 'panelCharts', 'panelBirthday', 'panelChat', 'panelSettings', 'panelApprovals', 'panelProfile', 'panelPayroll', 'panelSelfies'].forEach(id => {
         document.getElementById(id).classList.toggle('hidden', !panels.includes(id));
     });
     if (tab === 'review') renderReview();
@@ -580,6 +808,10 @@ function switchTab(tab, btn, panels) {
     if (tab === 'birthday') renderBirthdays();
     if (tab === 'chat') renderChat();
     if (tab === 'settings') renderSettings();
+    if (tab === 'approvals') renderApprovals();
+    if (tab === 'profile') { if (canSeeAll() && !viewingProfile) renderProfileList(); else renderProfile(viewingProfile); }
+    if (tab === 'payroll') { populatePayrollMonth(); renderPayroll(); }
+    if (tab === 'selfies') renderSelfies();
 }
 
 // ============ LOGIN ============
@@ -605,12 +837,11 @@ function quickLogin(email, password) {
 function renderQuickLogin() {
     const users = USERS();
     const grid = document.getElementById('quickLoginGrid');
-    grid.innerHTML = users.map(u => {
-        const roleClass = u.role === 'CEO' ? 'ceo' : u.role === 'CTO' ? 'cto' : '';
-        const icon = u.role === 'CEO' ? '👑' : u.role === 'CTO' ? '⚙️' : '💼';
+    grid.innerHTML = users.filter(u => u.role !== 'CEO' && u.role !== 'CTO').map(u => {
+        const icon = '💼';
         return `<button type="button" class="quick-btn" onclick="quickLogin('${u.email}', '${u.password}')">
             <div class="q-name">${icon} ${u.name.split(' ')[0]}</div>
-            <div class="q-role ${roleClass}">${u.role}</div>
+            <div class="q-role">${u.role}</div>
         </button>`;
     }).join('');
 }
@@ -626,13 +857,30 @@ function handleLogin(e) {
         err.style.display = 'block';
         return;
     }
+    if (user.role !== 'CEO' && user.role !== 'CTO') {
+        const now = new Date();
+        const totalMinutes = now.getHours() * 60 + now.getMinutes();
+        const loginStart = 10 * 60;
+        const loginEnd = 10 * 60 + 20;
+        if (totalMinutes < loginStart || totalMinutes > loginEnd) {
+            const err = document.getElementById('loginError');
+            err.textContent = 'Employee login is only allowed between 10:00 AM and 10:20 AM.';
+            err.style.display = 'block';
+            return;
+        }
+    }
     currentUser = user;
+    localStorage.setItem('nxt360_session', JSON.stringify(currentUser));
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('dashboardPage').style.display = 'block';
-    initDashboard();
+    initDashboard(true);
 }
 
 function handleLogout() {
+    openSelfieModal('logout');
+}
+
+function forceLogout() {
     const tk = todayKey();
     const records = getData('records', {});
     if (!records[tk]) records[tk] = {};
@@ -642,6 +890,7 @@ function handleLogout() {
     }
     setData('records', records);
     currentUser = null;
+    localStorage.removeItem('nxt360_session');
     document.getElementById('loginPage').style.display = 'flex';
     document.getElementById('dashboardPage').style.display = 'none';
     document.getElementById('loginEmail').value = '';
@@ -650,10 +899,24 @@ function handleLogout() {
 }
 
 // ============ DASHBOARD INIT ============
-function initDashboard() {
+let loginSelfiePending = false;
+
+function getUserPhoto(email) {
+    const photos = {
+        'samhithreddy@gmail.com': 'images/ceo.png',
+        'shivaganesh@gmail.com': 'images/logo.png',
+        'soumya@gmail.com': 'images/soumya.png',
+        'manaswini@gmail.com': 'images/manaswini.jpeg',
+        'srinitha@gmail.com': 'images/srinitha.png',
+        'harshitha@gmail.com': 'images/harshitha.png',
+    };
+    return photos[email] || 'images/logo.png';
+}
+
+function initDashboard(freshLogin) {
+    cleanOldSelfies();
     const photo = document.getElementById('userPhoto');
-    if (currentUser.email === 'samhithreddy@gmail.com') photo.src = 'images/ceo.png';
-    else photo.src = 'images/logo.png';
+    photo.src = getUserPhoto(currentUser.email);
     document.getElementById('userName').textContent = currentUser.name;
     document.getElementById('userRole').textContent = currentUser.role;
     updateClock();
@@ -670,13 +933,35 @@ function initDashboard() {
     renderNotifications();
     renderBdayWidget();
     updateCheckButtons();
+    renderApprovals();
+    renderProfile();
+    populatePayrollMonth();
+    renderPayroll();
 
-    // Show toast for unread notifications on login
+    checkAttendanceAlert();
+
     const notifs = getData('notifications', {});
     const myNotifs = notifs[currentUser.email] || [];
     const unread = myNotifs.filter(n => !n.read);
     if (unread.length > 0) {
-        setTimeout(() => showToast('🔔 New Notification', `You have ${unread.length} unread review${unread.length > 1 ? 's' : ''} from your CEO. Check the bell icon!`), 1000);
+        setTimeout(() => showToast('🔔 New Notifications', `You have ${unread.length} unread notification${unread.length > 1 ? 's' : ''}. Check the bell icon!`), 1000);
+    }
+
+    if (freshLogin && currentUser.role !== 'CEO') {
+        USERS().filter(u => u.role === 'CEO').forEach(u => {
+            createNotification(u.email, 'employee_login', `${currentUser.name} has logged in`, { from: currentUser.name, fromRole: currentUser.role });
+        });
+    }
+
+    if (freshLogin) {
+        loginSelfiePending = true;
+        document.getElementById('btnCheckIn').disabled = true;
+        document.getElementById('btnCheckOut').disabled = true;
+        document.getElementById('btnCheckIn').style.opacity = '0.5';
+        document.getElementById('btnCheckOut').style.opacity = '0.5';
+        setTimeout(() => openSelfieModal('login'), 500);
+    } else {
+        loginSelfiePending = false;
     }
 }
 
@@ -689,7 +974,7 @@ function updateClock() {
     document.getElementById('todayDate').textContent = date;
     document.getElementById('todayLabel').textContent = date;
     const h = now.getHours();
-    document.getElementById('officeStatus').innerHTML = (h >= 10 && h < 17)
+    document.getElementById('officeStatus').innerHTML = (h >= 10 && h < 18)
         ? '<span style="color:#059669">🟢 Office Open</span>'
         : '<span style="color:#ef4444">🔴 Office Closed</span>';
     let g = 'Good Morning';
@@ -746,6 +1031,13 @@ function updateCheckButtons() {
     const tk = todayKey();
     const records = getData('records', {});
     const rec = records[tk] && records[tk][currentUser.email];
+    if (loginSelfiePending) {
+        document.getElementById('btnCheckIn').disabled = true;
+        document.getElementById('btnCheckOut').disabled = true;
+        document.getElementById('btnCheckIn').style.opacity = '0.5';
+        document.getElementById('btnCheckOut').style.opacity = '0.5';
+        return;
+    }
     document.getElementById('btnCheckIn').disabled = !!(rec && rec.checkIn);
     document.getElementById('btnCheckOut').disabled = !(rec && rec.checkIn && !rec.checkOut);
     document.getElementById('btnCheckIn').style.opacity = (rec && rec.checkIn) ? '0.5' : '1';
@@ -767,9 +1059,16 @@ function renderToday() {
         if (leave) statusBadge = `<span class="badge ${leave.type === 'sick' ? 'badge-sick' : 'badge-casual'}">${leave.type === 'sick' ? 'Sick Leave' : 'Casual Leave'}</span>`;
         else if (rec && rec.checkIn) { ci = rec.checkIn; co = rec.checkOut || '—'; statusBadge = '<span class="badge badge-present">Present</span>'; }
         else statusBadge = '<span class="badge badge-absent">Absent</span>';
-        html += `<tr><td><strong>${u.name}</strong></td><td><span class="badge ${roleBadge}">${u.role}</span></td><td>${ci}</td><td>${co}</td><td>${statusBadge}</td></tr>`;
+        const selfieHtml = renderSelfieThumbs(u.email);
+        html += `<tr><td><div style="display:flex;align-items:center;gap:10px;"><img src="${getUserPhoto(u.email)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--border);"><strong>${u.name}</strong></div></td><td><span class="badge ${roleBadge}">${u.role}</span></td><td>${ci}</td><td>${co}</td><td>${statusBadge}</td><td>${selfieHtml}</td></tr>`;
     });
     document.getElementById('todayTable').innerHTML = html;
+    const thRow = document.querySelector('#panelToday thead tr');
+    if (thRow && !thRow.querySelector('th:nth-child(6)')) {
+        const th = document.createElement('th');
+        th.textContent = 'Selfie';
+        thRow.appendChild(th);
+    }
 }
 
 // ============ MONTHLY ============
@@ -811,10 +1110,13 @@ function markLeave() {
     const reason = document.getElementById('leaveReason').value || 'Not specified';
     if (!date) { alert('Please select a date'); return; }
     const leaves = getData('leaves', []);
-    leaves.push({ date, email: currentUser.email, name: currentUser.name, type, reason, markedBy: currentUser.name });
+    leaves.push({ date, email: currentUser.email, name: currentUser.name, type, reason, markedBy: currentUser.name, approvalStatus: 'pending', approvalComment: '', approvedBy: '', approvalDate: '' });
     setData('leaves', leaves);
+    USERS().filter(u => canSeeAll() || u.role === 'CEO').forEach(u => {
+        if (u.email !== currentUser.email) createNotification(u.email, 'leave_submitted', `Leave request from ${currentUser.name} for ${date}`, { from: currentUser.name, fromRole: currentUser.role });
+    });
     document.getElementById('leaveReason').value = '';
-    renderLeaves(); renderStats(); renderToday(); alert('Leave marked!');
+    renderLeaves(); renderStats(); renderToday(); alert('Leave request submitted! Awaiting approval.');
 }
 
 function renderLeaves() {
@@ -822,9 +1124,17 @@ function renderLeaves() {
     const viewLeaves = canSeeAll() ? leaves : leaves.filter(l => l.email === currentUser.email);
     let html = '';
     viewLeaves.slice().reverse().forEach(l => {
-        html += `<tr><td>${l.date}</td><td>${l.name}</td><td><span class="badge ${l.type === 'sick' ? 'badge-sick' : 'badge-casual'}">${l.type === 'sick' ? 'Sick Leave' : 'Casual Leave'}</span></td><td>${l.reason}</td><td>${l.markedBy}</td></tr>`;
+        const status = l.approvalStatus || 'pending';
+        const statusBadge = status === 'approved' ? 'badge-approved' : status === 'rejected' ? 'badge-rejected' : 'badge-pending';
+        html += `<tr><td>${l.date}</td><td>${l.name}</td><td><span class="badge ${l.type === 'sick' ? 'badge-sick' : 'badge-casual'}">${l.type === 'sick' ? 'Sick Leave' : 'Casual Leave'}</span></td><td>${escapeHtml(l.reason)}</td><td>${l.markedBy}</td><td><span class="badge ${statusBadge}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td></tr>`;
     });
-    document.getElementById('leaveTable').innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:var(--text-light)">No leave records</td></tr>';
+    document.getElementById('leaveTable').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:var(--text-light)">No leave records</td></tr>';
+    const thRow = document.querySelector('#panelLeave thead tr');
+    if (thRow && !thRow.querySelector('th:nth-child(6)')) {
+        const th = document.createElement('th');
+        th.textContent = 'Status';
+        thRow.appendChild(th);
+    }
 }
 
 // ============ WORK UPDATES ============
@@ -889,33 +1199,80 @@ function submitWorkUpdate() {
 
 // ============ CEO/CTO REVIEW ============
 function renderReview() {
+    const tasks = getData('tasks', {});
     const work = getData('workUpdates', {});
-    const dates = Object.keys(work).sort().reverse();
+    const allDates = [...new Set([...Object.keys(tasks), ...Object.keys(work)])].sort().reverse();
     const sel = document.getElementById('reviewDateSelect');
-    sel.innerHTML = dates.map(d => `<option value="${d}">${d}</option>`).join('');
+    sel.innerHTML = allDates.map(d => `<option value="${d}">${d}</option>`).join('');
     const date = sel.value;
     const container = document.getElementById('reviewListArea');
-    if (!date || !work[date]) { container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No work updates found</p></div>'; return; }
+    if (!date) { container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No updates found</p></div>'; return; }
 
-    const entries = work[date];
     let html = '';
     USERS().forEach(u => {
-        const entry = entries[u.email];
-        if (!entry || !entry.submitted) return;
-        html += `<div class="work-card" style="border-left-color: ${entry.reviewed ? 'var(--primary)' : 'var(--warning)'};">
-            <div class="work-header">
-                <div><strong>${u.name}</strong> <span class="badge ${u.role === 'CEO' ? 'badge-ceo' : u.role === 'CTO' ? 'badge-cto' : 'badge-emp'}">${u.role}</span></div>
-                <span class="badge ${entry.reviewed ? 'badge-reviewed' : 'badge-pending'}">${entry.reviewed ? '✅ Reviewed' : '⏳ Pending'}</span>
-            </div>
-            <div class="work-body">${escapeHtml(entry.content)}</div>
-            ${entry.reviewed ? `<div class="comment-box"><div class="comment-label">💬 ${entry.reviewedBy}'s Comment</div><div class="comment-text">${escapeHtml(entry.comment)}</div></div>` : `
-            <div class="comment-input">
-                <input type="text" id="comment_${u.email}" placeholder="Write your comment...">
-                <button class="btn btn-primary btn-xs" onclick="submitComment('${date}','${u.email}')">Comment</button>
-            </div>`}
-        </div>`;
+        const taskEntry = tasks[date] && tasks[date][u.email];
+        const workEntry = work[date] && work[date][u.email];
+        if (!taskEntry && (!workEntry || !workEntry.submitted)) return;
+
+        if (taskEntry && taskEntry.tasks && taskEntry.tasks.length > 0) {
+            html += `<div class="work-card" style="border-left-color: ${taskEntry.reviewed ? 'var(--primary)' : 'var(--warning)'};">
+                <div class="work-header">
+                    <div><strong>${u.name}</strong> <span class="badge ${u.role === 'CEO' ? 'badge-ceo' : u.role === 'CTO' ? 'badge-cto' : 'badge-emp'}">${u.role}</span></div>
+                    <span class="badge ${taskEntry.reviewed ? 'badge-reviewed' : 'badge-pending'}">${taskEntry.reviewed ? '✅ Reviewed' : '⏳ Pending'}</span>
+                </div>`;
+            taskEntry.tasks.forEach((t, ti) => {
+                const status = t.status || 'completed';
+                const badgeClass = status === 'completed' ? 'badge-completed' : status === 'partial' ? 'badge-partial' : status === 'blocked' ? 'badge-blocked' : 'badge-not-started';
+                html += `<div class="task-card">
+                    <div class="task-title">${escapeHtml(t.title)} <span class="badge ${badgeClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></div>
+                    <div class="task-detail planned"><strong>Planned:</strong> ${escapeHtml(t.planned)}</div>
+                    <div class="task-detail completed"><strong>Completed:</strong> ${escapeHtml(t.completed)}</div>
+                    ${t.blockers ? `<div class="task-detail blockers"><strong>Blockers:</strong> ${escapeHtml(t.blockers)}</div>` : ''}
+                </div>`;
+            });
+            if (taskEntry.reviewed) {
+                html += `<div class="comment-box"><div class="comment-label">💬 ${taskEntry.reviewedBy}'s Review</div><div class="comment-text">${escapeHtml(taskEntry.reviewComment || '')}</div></div>`;
+            } else {
+                html += `<div class="comment-input">
+                    <input type="text" id="taskComment_${u.email}" placeholder="Write your review comment...">
+                    <button class="btn btn-primary btn-xs" onclick="submitTaskReview('${date}','${u.email}')">Review</button>
+                </div>`;
+            }
+            html += '</div>';
+        }
+
+        if (workEntry && workEntry.submitted) {
+            html += `<div class="work-card" style="border-left-color: ${workEntry.reviewed ? 'var(--primary)' : 'var(--info)'};">
+                <div class="work-header">
+                    <div><strong>${u.name}</strong> <span class="badge ${u.role === 'CEO' ? 'badge-ceo' : u.role === 'CTO' ? 'badge-cto' : 'badge-emp'}">${u.role}</span> <span style="font-size:11px;color:var(--text-light);">(Legacy Update)</span></div>
+                    <span class="badge ${workEntry.reviewed ? 'badge-reviewed' : 'badge-pending'}">${workEntry.reviewed ? '✅ Reviewed' : '⏳ Pending'}</span>
+                </div>
+                <div class="work-body">${escapeHtml(workEntry.content)}</div>
+                ${workEntry.reviewed ? `<div class="comment-box"><div class="comment-label">💬 ${workEntry.reviewedBy}'s Comment</div><div class="comment-text">${escapeHtml(workEntry.comment || '')}</div></div>` : `
+                <div class="comment-input">
+                    <input type="text" id="comment_${u.email}" placeholder="Write your comment...">
+                    <button class="btn btn-primary btn-xs" onclick="submitComment('${date}','${u.email}')">Comment</button>
+                </div>`}
+            </div>`;
+        }
     });
-    container.innerHTML = html || '<div class="empty-state"><div class="icon">📭</div><p>No work updates for this date</p></div>';
+    container.innerHTML = html || '<div class="empty-state"><div class="icon">📭</div><p>No updates for this date</p></div>';
+}
+
+function submitTaskReview(date, email) {
+    const input = document.getElementById('taskComment_' + email);
+    const comment = input.value.trim();
+    if (!comment) { alert('Please enter a review comment!'); return; }
+    const tasks = getData('tasks', {});
+    if (tasks[date] && tasks[date][email]) {
+        tasks[date][email].reviewed = true;
+        tasks[date][email].reviewComment = comment;
+        tasks[date][email].reviewedBy = currentUser.name;
+        setData('tasks', tasks);
+        createNotification(email, 'task_reviewed', `Your tasks for ${date} were reviewed`, { from: currentUser.name, fromRole: currentUser.role, comment: comment });
+        renderReview();
+        alert('Review submitted! ✅');
+    }
 }
 
 function submitComment(date, email) {
@@ -974,15 +1331,29 @@ function renderNotifications() {
         return;
     }
 
-    list.innerHTML = myNotifs.map(n => `
-        <div class="notif-item ${n.read ? '' : 'unread'}" onclick="readNotif(${n.id})">
-            <div class="notif-text">
-                <strong>${n.from}</strong> (${n.fromRole}) reviewed your work update for <strong>${n.date}</strong>
-            </div>
-            <div class="notif-comment">💬 \"${escapeHtml(n.comment)}\"</div>
+    list.innerHTML = myNotifs.map(n => {
+        let text = '';
+        let icon = '🔔';
+        if (n.type === 'work_reviewed') { text = `<strong>${n.from}</strong> (${n.fromRole}) reviewed your work update for <strong>${n.date}</strong>`; icon = '📝'; }
+        else if (n.type === 'task_reviewed') { text = `<strong>${n.from}</strong> (${n.fromRole}) reviewed your tasks for <strong>${n.date}</strong>`; icon = '✅'; }
+        else if (n.type === 'leave_approved') { text = `<strong>${n.from}</strong> approved your leave request`; icon = '✅'; }
+        else if (n.type === 'leave_rejected') { text = `<strong>${n.from}</strong> rejected your leave request`; icon = '❌'; }
+        else if (n.type === 'leave_submitted') { text = `<strong>${n.from}</strong> (${n.fromRole}) submitted a leave request for <strong>${n.date}</strong>`; icon = '🏖️'; }
+        else if (n.type === 'expense_approved') { text = `<strong>${n.from}</strong> approved your expense claim`; icon = '💰'; }
+        else if (n.type === 'expense_rejected') { text = `<strong>${n.from}</strong> rejected your expense claim`; icon = '❌'; }
+        else if (n.type === 'expense_submitted') { text = `<strong>${n.from}</strong> submitted an expense for approval`; icon = '💰'; }
+        else if (n.type === 'document_approved') { text = `<strong>${n.from}</strong> approved your document`; icon = '📄'; }
+        else if (n.type === 'document_rejected') { text = `<strong>${n.from}</strong> rejected your document`; icon = '❌'; }
+        else if (n.type === 'document_submitted') { text = `<strong>${n.from}</strong> submitted a document for approval`; icon = '📄'; }
+        else if (n.type === 'employee_login') { text = `<strong>${n.from}</strong> (${n.fromRole}) has logged in`; icon = '🔐'; }
+        else if (n.type === 'work_updated') { text = `<strong>${n.from}</strong> (${n.fromRole}) has updated work for <strong>${n.date}</strong>`; icon = '💼'; }
+        else { text = n.comment || 'Notification'; }
+        return `<div class="notif-item ${n.read ? '' : 'unread'}" onclick="readNotif(${n.id})">
+            <div class="notif-text">${icon} ${text}</div>
+            ${n.comment && !['work_reviewed','task_reviewed'].includes(n.type) ? `<div class="notif-comment">💬 "${escapeHtml(n.comment)}"</div>` : ''}
             <div class="notif-time">${n.time}</div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 function readNotif(id) {
@@ -1031,7 +1402,7 @@ function renderTeam() {
         let status = 'Absent';
         if (leave) status = leave.type === 'sick' ? '🤒 Sick Leave' : '🏖️ Casual Leave';
         else if (rec && rec.checkIn) status = '✅ Present';
-        html += `<tr><td><strong>${u.name}</strong></td><td><span class="badge ${roleBadge}">${u.role}</span></td><td>${u.email}</td><td>${status}</td><td class="admin-actions">
+        html += `<tr><td><div style="display:flex;align-items:center;gap:10px;"><img src="${getUserPhoto(u.email)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--border);"><strong>${u.name}</strong></div></td><td><span class="badge ${roleBadge}">${u.role}</span></td><td>${u.email}</td><td>${status}</td><td class="admin-actions">
             <button class="btn btn-primary btn-xs" onclick="adminMark('${u.email}','${u.name}','present')">✅ Present</button>
             <button class="btn btn-danger btn-xs" onclick="adminMark('${u.email}','${u.name}','absent')">❌ Absent</button>
             <button class="btn btn-secondary btn-xs" onclick="adminMarkLeave('${u.email}','${u.name}','sick')">🤒 Sick</button>
@@ -1154,10 +1525,10 @@ const BIRTHDAYS_MAP = [
     { name: 'Samhith Reddy', month: 6, day: 12 },
     { name: 'Shivaganesh', month: 3, day: 22 },
     { name: 'Soumya', month: 2, day: 7 },
-    { name: 'Manaswini', month: 7, day: 14 },
-    { name: 'Harshitha', month: 8, day: 3 },
+    { name: 'Manaswini', month: 1, day: 24 },
+    { name: 'Harshitha', month: 2, day: 15 },
     { name: 'Ashwanth', month: 10, day: 19 },
-    { name: 'Srinitha', month: 11, day: 28 }
+    { name: 'Srinitha', month: 10, day: 6 }
 ];
 
 function getBirthdays() {
@@ -1188,17 +1559,17 @@ function renderBdayWidget() {
     const todayMonth = now.getMonth() + 1;
     const todayDay = now.getDate();
 
-    // Find today's birthday
     const todayBday = BIRTHDAYS.find(b => b.month === todayMonth && b.day === todayDay);
-    // Find next upcoming birthday
     const sorted = BIRTHDAYS.slice().sort((a, b) => daysUntilBirthday(a.month, a.day) - daysUntilBirthday(b.month, b.day));
     const nextBday = sorted[0];
 
     if (todayBday) {
+        const bdayUser = USERS().find(u => u.name === todayBday.name);
+        const img = bdayUser ? getUserPhoto(bdayUser.email) : 'images/logo.png';
         container.innerHTML = `
             <div class="bday-widget today-bday">
                 <div class="sparkles">✨🎉✨</div>
-                <div class="cake-icon">🎂</div>
+                <img src="${img}" class="bday-widget-img" alt="${todayBday.name}">
                 <div class="bday-info">
                     <h4>🎉 It's ${todayBday.name}'s Birthday Today!</h4>
                     <p>${todayBday.role === 'CEO' ? '👑' : todayBday.role === 'CTO' ? '⚙️' : '💼'} ${todayBday.role} — Wishing a wonderful year ahead!</p>
@@ -1208,9 +1579,11 @@ function renderBdayWidget() {
     } else if (nextBday) {
         const days = daysUntilBirthday(nextBday.month, nextBday.day);
         const dateStr = new Date(now.getFullYear(), nextBday.month - 1, nextBday.day).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        const bdayUser = USERS().find(u => u.name === nextBday.name);
+        const img = bdayUser ? getUserPhoto(bdayUser.email) : 'images/logo.png';
         container.innerHTML = `
             <div class="bday-widget">
-                <div class="cake-icon">🎂</div>
+                <img src="${img}" class="bday-widget-img" alt="${nextBday.name}">
                 <div class="bday-info">
                     <h4>🎈 Upcoming Birthday: ${nextBday.name}</h4>
                     <p>${nextBday.role === 'CEO' ? '👑' : nextBday.role === 'CTO' ? '⚙️' : '💼'} ${nextBday.role} — ${dateStr}</p>
@@ -1228,7 +1601,6 @@ function renderBirthdays() {
     const container = document.getElementById('bdayGrid');
     let html = '';
 
-    // Sort by upcoming
     const sorted = BIRTHDAYS.slice().sort((a, b) => {
         const aNext = daysUntilBirthday(a.month, a.day);
         const bNext = daysUntilBirthday(b.month, b.day);
@@ -1240,16 +1612,19 @@ function renderBirthdays() {
         const isToday = b.month === today.month && b.day === today.day;
         const isUpcoming = days <= 7 && days > 0;
         const cls = isToday ? 'today' : isUpcoming ? 'upcoming' : '';
-        const emoji = isToday ? '🎉🥳🎊' : isUpcoming ? '🎈' : '🎂';
         const dateStr = new Date(now.getFullYear(), b.month - 1, b.day).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-        const countdown = isToday ? "🎉 It's today! Happy Birthday!" : `in ${days} day${days !== 1 ? 's' : ''}`;
+        const countdown = isToday ? "🎉 It's today!" : `in ${days} day${days !== 1 ? 's' : ''}`;
+        const bdayUser = USERS().find(u => u.name === b.name);
+        const img = bdayUser ? getUserPhoto(bdayUser.email) : 'images/logo.png';
         html += `<div class="bday-card ${cls}">
             ${isToday ? '<div class="bday-confetti">🎉🎈🎊</div>' : ''}
-            <div class="emoji">${emoji}</div>
-            <div class="bname">${b.name}</div>
-            <div class="brole">${b.role}</div>
-            <div class="bdate">📅 ${dateStr}</div>
-            <div class="countdown">${countdown}</div>
+            <img src="${img}" class="bday-img" alt="${b.name}">
+            <div class="bday-overlay">
+                <div class="bname">${b.name}</div>
+                <div class="brole">${b.role === 'CEO' ? '👑' : b.role === 'CTO' ? '⚙️' : '💼'} ${b.role}</div>
+                <div class="bdate">📅 ${dateStr}</div>
+                <div class="countdown">${countdown}</div>
+            </div>
         </div>`;
     });
     container.innerHTML = html;
@@ -1403,11 +1778,14 @@ function sendAnnouncement() {
 function renderSettings() {
     const users = USERS();
     const bd = getBirthdays();
+    const profiles = getData('profiles', {});
+    const salaryData = getData('salary', {});
     let html = '<div class="settings-grid">';
     users.forEach((u, i) => {
         const initials = u.name.split(' ').map(w => w[0]).join('');
         const avColor = u.role === 'CEO' ? '#7c3aed' : u.role === 'CTO' ? '#2563eb' : '#10b981';
         const bday = bd[u.name] || { month: 1, day: 1 };
+        const profile = profiles[u.email] || {};
         const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
         html += `<div class="settings-card">
             <div class="s-header">
@@ -1422,6 +1800,10 @@ function renderSettings() {
                 <option value="CTO" ${u.role==='CTO'?'selected':''}>CTO</option>
                 <option value="Employee" ${u.role==='Employee'?'selected':''}>Employee</option>
             </select></div>
+            <div class="s-field"><label>Phone</label><input type="tel" id="setPhone_${i}" value="${escapeHtml(profile.phone || '')}" placeholder="Phone number"></div>
+            <div class="s-field"><label>Department</label><input type="text" id="setDept_${i}" value="${escapeHtml(profile.department || '')}" placeholder="Department"></div>
+            <div class="s-field"><label>Designation</label><input type="text" id="setDesig_${i}" value="${escapeHtml(profile.designation || '')}" placeholder="Designation"></div>
+            <div class="s-field"><label>Monthly Salary (₹)</label><input type="number" id="setSalary_${i}" value="${salaryData[u.email] || ''}" min="0" placeholder="e.g. 25000"></div>
             <div class="s-field"><label>Birthday Month</label><select id="setBMonth_${i}">
                 ${months.map((m,mi) => `<option value="${mi+1}" ${bday.month===mi+1?'selected':''}>${m}</option>`).join('')}
             </select></div>
@@ -1443,20 +1825,31 @@ function saveProfile(index) {
     const email = document.getElementById('setEmail_' + index).value.trim().toLowerCase();
     const pass = document.getElementById('setPass_' + index).value.trim();
     const role = document.getElementById('setRole_' + index).value;
+    const phone = document.getElementById('setPhone_' + index).value.trim();
+    const dept = document.getElementById('setDept_' + index).value.trim();
+    const desig = document.getElementById('setDesig_' + index).value.trim();
+    const salary = parseFloat(document.getElementById('setSalary_' + index).value) || 0;
     const bMonth = parseInt(document.getElementById('setBMonth_' + index).value);
     const bDay = parseInt(document.getElementById('setBDay_' + index).value);
     if (!name || !email || !pass) { alert('Name, email and password are required!'); return; }
     if (bDay < 1 || bDay > 31) { alert('Invalid birthday day!'); return; }
-    // Update user
     users[index] = { name, email, password: pass, role };
     setUsers(users);
-    // Update birthday - remove old, add new
     const bd = getBirthdays();
     if (oldName !== name) delete bd[oldName];
     bd[name] = { month: bMonth, day: bDay };
     setBirthdays(bd);
     updateBIRTHDAYSFromStorage();
-    // If editing self, update currentUser and topbar
+    const profiles = getData('profiles', {});
+    if (!profiles[email]) profiles[email] = {};
+    profiles[email].phone = phone;
+    profiles[email].department = dept;
+    profiles[email].designation = desig;
+    if (!profiles[email].joinedDate) profiles[email].joinedDate = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    setData('profiles', profiles);
+    const salaryData = getData('salary', {});
+    salaryData[email] = salary;
+    setData('salary', salaryData);
     if (currentUser && users[index].email === currentUser.email) {
         currentUser = users[index];
         document.getElementById('userName').textContent = currentUser.name;
@@ -1502,9 +1895,11 @@ function addNewMember() {
     bd[newName] = { month: 1, day: 1 };
     setBirthdays(bd);
     updateBIRTHDAYSFromStorage();
+    const profiles = getData('profiles', {});
+    profiles[newEmail] = { phone: '', department: '', designation: '', joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) };
+    setData('profiles', profiles);
     renderBdayWidget();
     renderSettings();
-    // Scroll to the new card
     const cards = document.querySelectorAll('.settings-card');
     if (cards.length) cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
     alert('New member added! Edit their details below and click Save.');
@@ -1521,6 +1916,838 @@ function updateBIRTHDAYSFromStorage() {
 }
 
 function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+// ============ NOTIFICATION HELPERS ============
+function createNotification(targetEmail, type, message, extra) {
+    const notifs = getData('notifications', {});
+    if (!notifs[targetEmail]) notifs[targetEmail] = [];
+    notifs[targetEmail].unshift({
+        id: Date.now(),
+        type: type,
+        date: todayKey(),
+        from: extra.from || currentUser.name,
+        fromRole: extra.fromRole || currentUser.role,
+        comment: extra.comment || message,
+        read: false,
+        time: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    });
+    setData('notifications', notifs);
+}
+
+function checkAttendanceAlert() {
+    const now = new Date();
+    if (now.getHours() >= 11 && canSeeAll()) {
+        const tk = todayKey();
+        const records = getData('records', {});
+        const leaves = getData('leaves', []);
+        const absentUsers = USERS().filter(u => {
+            const hasLeave = leaves.find(l => l.date === tk && l.email === u.email);
+            if (hasLeave) return false;
+            return !(records[tk] && records[tk][u.email] && records[tk][u.email].checkIn);
+        });
+        if (absentUsers.length > 0) {
+            setTimeout(() => showToast('⚠️ Attendance Alert', `${absentUsers.length} employee(s) haven't checked in yet today: ${absentUsers.map(u => u.name).join(', ')}`), 2000);
+        }
+    }
+}
+
+// ============ SELFIE SYSTEM ============
+let selfieStream = null;
+let selfieType = 'login';
+let capturedSelfieData = null;
+let selfieCaptured = false;
+
+function cleanOldSelfies() {
+    const selfies = getData('selfies', []);
+    const now = Date.now();
+    const cleaned = selfies.filter(s => (now - s.timestamp) < 2 * 24 * 60 * 60 * 1000);
+    if (cleaned.length !== selfies.length) setData('selfies', cleaned);
+}
+
+function openSelfieModal(type) {
+    selfieType = type;
+    capturedSelfieData = null;
+    selfieCaptured = false;
+    document.getElementById('selfieTitle').textContent = type === 'login' ? '📸 Capture Login Selfie' : '📸 Capture Logout Selfie';
+    document.getElementById('selfieSubtitle').textContent = type === 'login' ? 'This selfie is required for attendance verification' : 'Please capture a selfie before logging out';
+    document.getElementById('selfieCaptured').style.display = 'none';
+    document.getElementById('selfieActions').style.display = 'flex';
+    document.getElementById('selfieRetakeActions').style.display = 'none';
+    document.getElementById('btnCaptureSelfie').disabled = false;
+    document.getElementById('selfieModal').classList.add('open');
+
+    const camArea = document.getElementById('selfieCamArea');
+    camArea.innerHTML = '<div class="selfie-preview" id="selfiePreviewArea"><video id="selfieVideo" autoplay playsinline muted></video><canvas id="selfieCanvas"></canvas></div>';
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        camArea.innerHTML = '<div class="selfie-no-cam"><div class="icon">📷</div><p>Camera not available. Selfie is mandatory to use the dashboard.</p><button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="backToLogin()">⬅️ Back to Login</button></div>';
+        return;
+    }
+
+    setTimeout(() => {
+        const video = document.getElementById('selfieVideo');
+        if (!video) return;
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } })
+            .then(stream => {
+                selfieStream = stream;
+                video.srcObject = stream;
+                video.onloadedmetadata = () => { video.play().catch(() => {}); };
+            })
+            .catch(err => {
+                console.log('Camera error:', err);
+                camArea.innerHTML = '<div class="selfie-no-cam"><div class="icon">📷</div><p>Camera permission denied. Selfie is mandatory to use the dashboard.</p><button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="backToLogin()">⬅️ Back to Login</button></div>';
+            });
+    }, 300);
+}
+
+function captureSelfie() {
+    const video = document.getElementById('selfieVideo');
+    const canvas = document.getElementById('selfieCanvas');
+    if (!video.srcObject) { skipSelfie(); return; }
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    capturedSelfieData = canvas.toDataURL('image/jpeg', 0.6);
+    document.getElementById('selfieCapturedImg').src = capturedSelfieData;
+    document.getElementById('selfiePreviewArea').style.display = 'none';
+    document.getElementById('selfieCaptured').style.display = 'block';
+    document.getElementById('selfieActions').style.display = 'none';
+    document.getElementById('selfieRetakeActions').style.display = 'flex';
+    stopSelfieStream();
+}
+
+function retakeSelfie() {
+    capturedSelfieData = null;
+    document.getElementById('selfieCaptured').style.display = 'none';
+    document.getElementById('selfiePreviewArea').style.display = 'block';
+    document.getElementById('selfieActions').style.display = 'flex';
+    document.getElementById('selfieRetakeActions').style.display = 'none';
+    openSelfieModal(selfieType);
+}
+
+function confirmSelfie() {
+    if (!capturedSelfieData) { closeSelfieModal(); return; }
+    const selfies = getData('selfies', []);
+    selfies.push({
+        email: currentUser.email,
+        name: currentUser.name,
+        type: selfieType,
+        image: capturedSelfieData,
+        timestamp: Date.now(),
+        date: todayKey(),
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    });
+    setData('selfies', selfies);
+    selfieCaptured = true;
+    const wasLogout = selfieType === 'logout';
+    closeSelfieModal();
+    if (!wasLogout) {
+        loginSelfiePending = false;
+        updateCheckButtons();
+        showToast('📸 Selfie Captured', 'Login selfie saved. You may now use the dashboard.');
+    }
+}
+
+function skipSelfie() {
+    showToast('⚠️ Selfie Required', 'You must capture a selfie. Returning to login.');
+    backToLogin();
+}
+
+function backToLogin() {
+    stopSelfieStream();
+    document.getElementById('selfieModal').classList.remove('open');
+    loginSelfiePending = false;
+    currentUser = null;
+    localStorage.removeItem('nxt360_session');
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('dashboardPage').style.display = 'none';
+    capturedSelfieData = null;
+    selfieType = 'login';
+    selfieCaptured = false;
+}
+
+function closeSelfieModal() {
+    stopSelfieStream();
+    const wasLogout = selfieType === 'logout' && currentUser;
+    document.getElementById('selfieModal').classList.remove('open');
+    capturedSelfieData = null;
+    selfieType = 'login';
+    if (wasLogout && selfieCaptured) { forceLogout(); }
+    if (!wasLogout && !selfieCaptured) {
+        loginSelfiePending = false;
+        currentUser = null;
+        localStorage.removeItem('nxt360_session');
+        document.getElementById('loginPage').style.display = 'flex';
+        document.getElementById('dashboardPage').style.display = 'none';
+    }
+    selfieCaptured = false;
+}
+
+function stopSelfieStream() {
+    if (selfieStream) { selfieStream.getTracks().forEach(t => t.stop()); selfieStream = null; }
+}
+
+function getSelfiesForUser(email, date) {
+    const selfies = getData('selfies', []);
+    return selfies.filter(s => s.email === email && (!date || s.date === date));
+}
+
+function getTodaySelfies(email) {
+    return getSelfiesForUser(email, todayKey());
+}
+
+function renderSelfieThumbs(email) {
+    const todaySelfies = getTodaySelfies(email);
+    if (todaySelfies.length === 0) return '<span style="font-size:12px;color:var(--text-light)">No selfie</span>';
+    let html = '<div class="selfie-thumbs">';
+    todaySelfies.forEach(s => {
+        const typeClass = s.type === 'login' ? 'selfie-type-login' : 'selfie-type-logout';
+        html += `<div style="position:relative;display:inline-block;">
+            <img src="${s.image}" class="selfie-thumb" onclick="openImgModal(this.src)" title="${s.type} at ${s.time}">
+            <span class="selfie-type-badge ${typeClass}" style="position:absolute;bottom:-2px;right:-2px;">${s.type === 'login' ? 'IN' : 'OUT'}</span>
+        </div>`;
+    });
+    html += '</div>';
+    return html;
+}
+
+function renderSelfies() {
+    const filter = document.getElementById('selfieDateFilter').value;
+    const selfies = getData('selfies', []);
+    const container = document.getElementById('selfiesGrid');
+    let filtered = selfies;
+    if (filter === 'today') filtered = selfies.filter(s => s.date === todayKey());
+    if (!canSeeAll()) filtered = filtered.filter(s => s.email === currentUser.email);
+    filtered.sort((a, b) => b.timestamp - a.timestamp);
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📸</div><p>No selfies recorded yet</p></div>';
+        return;
+    }
+    container.innerHTML = filtered.map(s => `
+        <div style="background:var(--bg);border-radius:12px;padding:12px;border:1px solid var(--border);">
+            <img src="${s.image}" style="width:100%;border-radius:10px;cursor:pointer;margin-bottom:8px;" onclick="openImgModal(this.src)">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <img src="${getUserPhoto(s.email)}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid var(--border);">
+                    <strong style="font-size:13px;">${s.name}</strong>
+                </div>
+                <span class="selfie-type-badge ${s.type === 'login' ? 'selfie-type-login' : 'selfie-type-logout'}">${s.type === 'login' ? '🟢 LOGIN' : '🔴 LOGOUT'}</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-light);margin-top:4px;">${s.date} at ${s.time}</div>
+        </div>
+    `).join('');
+}
+
+// ============ TASK MANAGEMENT ============
+function renderWorkUpdates() {
+    const tk = todayKey();
+    const area = document.getElementById('workFormArea');
+    const tasks = getData('tasks', {});
+    const myTasks = tasks[tk] && tasks[tk][currentUser.email];
+
+    if (myTasks && myTasks.tasks && myTasks.tasks.length > 0) {
+        let html = '<h4 style="margin-bottom:12px">📋 Today\'s Tasks</h4>';
+        myTasks.tasks.forEach((t, i) => {
+            const status = t.status || 'completed';
+            const badgeClass = status === 'completed' ? 'badge-completed' : status === 'partial' ? 'badge-partial' : status === 'blocked' ? 'badge-blocked' : 'badge-not-started';
+            const progress = status === 'completed' ? 100 : status === 'partial' ? 50 : status === 'blocked' ? 25 : 0;
+            const barClass = progress === 100 ? 'full' : progress >= 50 ? 'partial' : 'low';
+            html += `<div class="task-card">
+                <div class="task-title">${escapeHtml(t.title)} <span class="badge ${badgeClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></div>
+                <div class="task-detail planned"><strong>Planned:</strong> ${escapeHtml(t.planned)}</div>
+                <div class="task-detail completed"><strong>Completed:</strong> ${escapeHtml(t.completed || 'Not yet updated')}</div>
+                ${t.blockers ? `<div class="task-detail blockers"><strong>Blockers:</strong> ${escapeHtml(t.blockers)}</div>` : ''}
+                <div class="task-progress"><div class="task-progress-bar ${barClass}" style="width:${progress}%"></div></div>
+            </div>`;
+        });
+        if (myTasks.reviewed) {
+            html += `<div class="comment-box" style="margin-top:12px;"><div class="comment-label">💬 ${myTasks.reviewedBy}'s Review</div><div class="comment-text">${escapeHtml(myTasks.reviewComment || 'No comment')}</div></div>`;
+        } else {
+            html += '<div style="margin-top:10px"><span class="badge badge-pending">⏳ Awaiting Review</span></div>';
+        }
+        area.innerHTML = html;
+    } else {
+        area.innerHTML = `
+            <div class="work-form">
+                <h4 style="margin-bottom:12px">📝 Plan your tasks for today:</h4>
+                <div id="taskRows"></div>
+                <div style="margin-top:12px;display:flex;gap:8px;">
+                    <button class="btn btn-secondary btn-sm" onclick="addTaskRow()">➕ Add Task</button>
+                    <button class="btn btn-primary btn-sm" onclick="submitTasks()">✅ Submit All Tasks</button>
+                </div>
+            </div>`;
+        addTaskRow();
+    }
+
+    const listArea = document.getElementById('workListArea');
+    let pastHtml = '<h4 style="margin-bottom:12px">📅 Past Task Updates</h4>';
+    let hasPast = false;
+    const allTasks = getData('tasks', {});
+    Object.keys(allTasks).sort().reverse().forEach(date => {
+        if (date === tk) return;
+        const entry = allTasks[date] && allTasks[date][currentUser.email];
+        if (entry && entry.tasks && entry.tasks.length > 0) {
+            hasPast = true;
+            let dayHtml = `<div style="margin-bottom:16px;"><strong style="font-size:13px;">📅 ${date}</strong>`;
+            entry.tasks.forEach(t => {
+                const status = t.status || 'completed';
+                const badgeClass = status === 'completed' ? 'badge-completed' : status === 'partial' ? 'badge-partial' : 'badge-blocked';
+                dayHtml += `<div class="task-card">
+                    <div class="task-title">${escapeHtml(t.title)} <span class="badge ${badgeClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></div>
+                    <div class="task-detail planned"><strong>Planned:</strong> ${escapeHtml(t.planned)}</div>
+                    <div class="task-detail completed"><strong>Completed:</strong> ${escapeHtml(t.completed || 'N/A')}</div>
+                    ${t.blockers ? `<div class="task-detail blockers"><strong>Blockers:</strong> ${escapeHtml(t.blockers)}</div>` : ''}
+                </div>`;
+            });
+            if (entry.reviewed) dayHtml += `<div class="comment-box" style="margin-top:8px;"><div class="comment-label">💬 Review by ${entry.reviewedBy}</div><div class="comment-text">${escapeHtml(entry.reviewComment || '')}</div></div>`;
+            dayHtml += '</div>';
+            pastHtml += dayHtml;
+        }
+    });
+    listArea.innerHTML = hasPast ? pastHtml : '';
+}
+
+let taskRowCount = 0;
+function addTaskRow() {
+    const container = document.getElementById('taskRows');
+    if (!container) return;
+    const idx = taskRowCount++;
+    const row = document.createElement('div');
+    row.className = 'task-row';
+    row.id = 'taskRow_' + idx;
+    row.innerHTML = `
+        <div class="task-fields">
+            <input type="text" placeholder="Task title (e.g., Complete API integration)" id="taskTitle_${idx}">
+            <textarea placeholder="What was planned for today?" rows="2" id="taskPlanned_${idx}"></textarea>
+            <textarea placeholder="What was actually completed?" rows="2" id="taskCompleted_${idx}"></textarea>
+            <input type="text" placeholder="Any blockers? (optional)" id="taskBlockers_${idx}">
+            <div style="display:flex;gap:8px;align-items:center;">
+                <label style="font-size:12px;font-weight:600;">Status:</label>
+                <select id="taskStatus_${idx}" style="padding:6px 10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;">
+                    <option value="completed">Completed</option>
+                    <option value="partial">Partial</option>
+                    <option value="not-started">Not Started</option>
+                    <option value="blocked">Blocked</option>
+                </select>
+            </div>
+        </div>
+        <button class="task-remove" onclick="removeTaskRow(${idx})">✕</button>`;
+    container.appendChild(row);
+}
+
+function removeTaskRow(idx) {
+    const row = document.getElementById('taskRow_' + idx);
+    if (row) row.remove();
+}
+
+function submitTasks() {
+    const container = document.getElementById('taskRows');
+    if (!container) return;
+    const rows = container.querySelectorAll('.task-row');
+    if (rows.length === 0) { alert('Add at least one task!'); return; }
+    const taskList = [];
+    rows.forEach((row, i) => {
+        const inputs = row.querySelectorAll('input, textarea, select');
+        const title = inputs[0].value.trim();
+        const planned = inputs[1].value.trim();
+        const completed = inputs[2].value.trim();
+        const blockers = inputs[3].value.trim();
+        const status = inputs[4].value;
+        if (title) taskList.push({ title, planned: planned || 'Not specified', completed: completed || 'Not yet updated', blockers, status });
+    });
+    if (taskList.length === 0) { alert('Please fill in at least one task title!'); return; }
+    const tk = todayKey();
+    const tasks = getData('tasks', {});
+    if (!tasks[tk]) tasks[tk] = {};
+    tasks[tk][currentUser.email] = { tasks: taskList, reviewed: false, reviewComment: '', reviewedBy: '', name: currentUser.name };
+    setData('tasks', tasks);
+    taskRowCount = 0;
+    renderWorkUpdates();
+    alert('Tasks submitted! ✅');
+    if (currentUser.role !== 'CEO') {
+        USERS().filter(u => u.role === 'CEO').forEach(u => {
+            createNotification(u.email, 'work_updated', `${currentUser.name} has updated work for ${tk}`, { from: currentUser.name, fromRole: currentUser.role });
+        });
+    }
+}
+
+// ============ APPROVAL SYSTEM ============
+let currentApprovalTab = 'leaves';
+
+function switchApprovalTab(tab, btn) {
+    currentApprovalTab = tab;
+    document.querySelectorAll('.approval-tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('approvalLeaveSection').classList.toggle('hidden', tab !== 'leaves');
+    document.getElementById('approvalExpenseSection').classList.toggle('hidden', tab !== 'expenses');
+    document.getElementById('approvalDocSection').classList.toggle('hidden', tab !== 'documents');
+    renderApprovals();
+}
+
+function renderApprovals() {
+    renderLeaveApprovals();
+    renderExpenseForm();
+    renderExpenseApprovals();
+    renderDocForm();
+    renderDocApprovals();
+}
+
+function renderLeaveApprovals() {
+    const container = document.getElementById('approvalLeaveList');
+    const leaves = getData('leaves', []);
+    let viewLeaves = canSeeAll() ? leaves : leaves.filter(l => l.email === currentUser.email);
+    viewLeaves = viewLeaves.slice().reverse();
+
+    if (viewLeaves.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">🏖️</div><p>No leave requests</p></div>';
+        return;
+    }
+    container.innerHTML = viewLeaves.map((l, i) => {
+        const status = l.approvalStatus || (canSeeAll() ? 'pending' : 'pending');
+        const statusBadge = status === 'approved' ? 'badge-approved' : status === 'rejected' ? 'badge-rejected' : 'badge-pending';
+        return `<div class="approval-card">
+            <div class="approval-header">
+                <strong>${l.name}</strong>
+                <span class="badge ${statusBadge}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+            </div>
+            <div class="approval-meta">📅 ${l.date} • Type: ${l.type === 'sick' ? '🤒 Sick Leave' : '🏖️ Casual Leave'}</div>
+            <div class="approval-body"><strong>Reason:</strong> ${escapeHtml(l.reason)}</div>
+            ${l.approvalComment ? `<div class="approval-meta"><strong>Comment:</strong> ${escapeHtml(l.approvalComment)}</div>` : ''}
+            ${canSeeAll() && status === 'pending' ? `<div class="approval-actions">
+                <button class="btn btn-primary btn-xs" onclick="approveLeave(${leaves.indexOf(l)}, 'approved')">✅ Approve</button>
+                <button class="btn btn-danger btn-xs" onclick="approveLeave(${leaves.indexOf(l)}, 'rejected')">❌ Reject</button>
+            </div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function approveLeave(index, status) {
+    const comment = prompt(status === 'approved' ? 'Approval comment (optional):' : 'Rejection reason:');
+    if (status === 'rejected' && !comment) { alert('Please provide a reason for rejection.'); return; }
+    const leaves = getData('leaves', []);
+    leaves[index].approvalStatus = status;
+    leaves[index].approvalComment = comment || '';
+    leaves[index].approvedBy = currentUser.name;
+    leaves[index].approvalDate = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    setData('leaves', leaves);
+
+    const targetEmail = leaves[index].email;
+    createNotification(targetEmail, `leave_${status}`, `Your leave request for ${leaves[index].date} was ${status}`, { from: currentUser.name, fromRole: currentUser.role, comment: comment || '' });
+    renderLeaveApprovals();
+    renderStats();
+    alert(`Leave ${status}! ✅`);
+}
+
+function renderExpenseForm() {
+    const area = document.getElementById('expenseFormArea');
+    area.innerHTML = `
+        <h4 style="margin-bottom:12px">➕ Submit Expense</h4>
+        <div class="form-row">
+            <div class="form-group"><label>Date</label><input type="date" id="expDate" value="${todayKey()}"></div>
+            <div class="form-group"><label>Amount (₹)</label><input type="number" id="expAmount" placeholder="0.00" min="0"></div>
+            <div class="form-group"><label>Category</label><select id="expCategory"><option>Travel</option><option>Food</option><option>Office Supplies</option><option>Communication</option><option>Other</option></select></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Description</label><input type="text" id="expDesc" placeholder="Brief description"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="submitExpense()">Submit Expense</button>`;
+}
+
+function submitExpense() {
+    const date = document.getElementById('expDate').value;
+    const amount = parseFloat(document.getElementById('expAmount').value);
+    const category = document.getElementById('expCategory').value;
+    const desc = document.getElementById('expDesc').value.trim();
+    if (!date || !amount || amount <= 0) { alert('Please fill date and valid amount!'); return; }
+    const expenses = getData('expenses', []);
+    expenses.push({
+        email: currentUser.email, name: currentUser.name, date, amount, category, description: desc || 'No description',
+        submittedBy: currentUser.name, approvalStatus: 'pending', approvalComment: '', approvedBy: '', approvalDate: '',
+        timestamp: Date.now()
+    });
+    setData('expenses', expenses);
+    USERS().filter(u => u.role === 'CEO' || u.role === 'CTO').forEach(u => {
+        if (u.email !== currentUser.email) createNotification(u.email, 'expense_submitted', `Expense of ₹${amount} (${category}) from ${currentUser.name}`, { from: currentUser.name, fromRole: currentUser.role });
+    });
+    document.getElementById('expAmount').value = '';
+    document.getElementById('expDesc').value = '';
+    renderExpenseApprovals();
+    alert('Expense submitted! ✅');
+}
+
+function renderExpenseApprovals() {
+    const container = document.getElementById('approvalExpenseList');
+    const expenses = getData('expenses', []);
+    let viewExp = canSeeAll() ? expenses : expenses.filter(e => e.email === currentUser.email);
+    viewExp = viewExp.slice().reverse();
+
+    if (viewExp.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">💰</div><p>No expense records</p></div>';
+        return;
+    }
+    container.innerHTML = viewExp.map((e, i) => {
+        const status = e.approvalStatus || 'pending';
+        const statusBadge = status === 'approved' ? 'badge-approved' : status === 'rejected' ? 'badge-rejected' : 'badge-pending';
+        const origIdx = expenses.indexOf(e);
+        return `<div class="approval-card">
+            <div class="approval-header">
+                <strong>${e.name}</strong>
+                <span class="badge ${statusBadge}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+            </div>
+            <div class="approval-meta">📅 ${e.date} • Category: ${e.category} • Submitted by: ${e.submittedBy}</div>
+            <div class="approval-body"><strong>Amount:</strong> ₹${e.amount} <br><strong>Description:</strong> ${escapeHtml(e.description)}</div>
+            ${e.approvalComment ? `<div class="approval-meta"><strong>Comment:</strong> ${escapeHtml(e.approvalComment)}</div>` : ''}
+            ${canSeeAll() && status === 'pending' ? `<div class="approval-actions">
+                <button class="btn btn-primary btn-xs" onclick="approveExpense(${origIdx},'approved')">✅ Approve</button>
+                <button class="btn btn-danger btn-xs" onclick="approveExpense(${origIdx},'rejected')">❌ Reject</button>
+            </div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function approveExpense(index, status) {
+    const comment = prompt(status === 'approved' ? 'Comment (optional):' : 'Rejection reason:');
+    if (status === 'rejected' && !comment) { alert('Provide a reason.'); return; }
+    const expenses = getData('expenses', []);
+    expenses[index].approvalStatus = status;
+    expenses[index].approvalComment = comment || '';
+    expenses[index].approvedBy = currentUser.name;
+    expenses[index].approvalDate = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    setData('expenses', expenses);
+    createNotification(expenses[index].email, `expense_${status}`, `Your expense of ₹${expenses[index].amount} was ${status}`, { from: currentUser.name, fromRole: currentUser.role, comment: comment || '' });
+    renderExpenseApprovals();
+    alert(`Expense ${status}! ✅`);
+}
+
+function renderDocForm() {
+    document.getElementById('docFormArea').innerHTML = `
+        <h4 style="margin-bottom:12px">➕ Submit Document</h4>
+        <div class="form-row">
+            <div class="form-group"><label>Document Title</label><input type="text" id="docTitle" placeholder="Document title"></div>
+            <div class="form-group"><label>Type</label><select id="docType"><option>Report</option><option>Proposal</option><option>Invoice</option><option>Letter</option><option>Other</option></select></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Description</label><textarea id="docDesc" rows="2" placeholder="Brief description"></textarea></div>
+            <div class="form-group"><label>Attach File (max 5MB)</label><input type="file" id="docFile" accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.csv"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="submitDocument()">Submit Document</button>`;
+}
+
+let docFileData = null;
+document.addEventListener('change', function(e) {
+    if (e.target.id === 'docFile') {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { alert('File too large! Max 5MB.'); e.target.value = ''; return; }
+        const reader = new FileReader();
+        reader.onload = function(ev) { docFileData = { name: file.name, type: file.type, data: ev.target.result }; };
+        reader.readAsDataURL(file);
+    }
+});
+
+function submitDocument() {
+    const title = document.getElementById('docTitle').value.trim();
+    const type = document.getElementById('docType').value;
+    const desc = document.getElementById('docDesc').value.trim();
+    if (!title) { alert('Please enter a document title!'); return; }
+    const documents = getData('documents', []);
+    documents.push({
+        email: currentUser.email, name: currentUser.name, title, type, description: desc || 'No description',
+        file: docFileData, submittedBy: currentUser.name,
+        approvalStatus: 'pending', approvalComment: '', approvedBy: '', approvalDate: '',
+        timestamp: Date.now()
+    });
+    setData('documents', documents);
+    USERS().filter(u => u.role === 'CEO' || u.role === 'CTO').forEach(u => {
+        if (u.email !== currentUser.email) createNotification(u.email, 'document_submitted', `Document "${title}" (${type}) from ${currentUser.name}`, { from: currentUser.name, fromRole: currentUser.role });
+    });
+    document.getElementById('docTitle').value = '';
+    document.getElementById('docDesc').value = '';
+    document.getElementById('docFile').value = '';
+    docFileData = null;
+    renderDocApprovals();
+    alert('Document submitted! ✅');
+}
+
+function renderDocApprovals() {
+    const container = document.getElementById('approvalDocList');
+    const documents = getData('documents', []);
+    let viewDocs = canSeeAll() ? documents : documents.filter(d => d.email === currentUser.email);
+    viewDocs = viewDocs.slice().reverse();
+
+    if (viewDocs.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📄</div><p>No document records</p></div>';
+        return;
+    }
+    container.innerHTML = viewDocs.map((d, i) => {
+        const status = d.approvalStatus || 'pending';
+        const statusBadge = status === 'approved' ? 'badge-approved' : status === 'rejected' ? 'badge-rejected' : 'badge-pending';
+        const origIdx = documents.indexOf(d);
+        return `<div class="approval-card">
+            <div class="approval-header">
+                <strong>${d.name} — ${escapeHtml(d.title)}</strong>
+                <span class="badge ${statusBadge}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+            </div>
+            <div class="approval-meta">📅 ${d.timestamp ? new Date(d.timestamp).toLocaleDateString() : 'N/A'} • Type: ${d.type} • Submitted by: ${d.submittedBy}</div>
+            <div class="approval-body">${escapeHtml(d.description)}</div>
+            ${d.file ? `<div style="margin-bottom:8px;"><a href="${d.file.data}" download="${d.file.name}" style="font-size:13px;color:var(--primary);font-weight:600;">📎 ${d.file.name}</a></div>` : ''}
+            ${d.approvalComment ? `<div class="approval-meta"><strong>Comment:</strong> ${escapeHtml(d.approvalComment)}</div>` : ''}
+            ${canSeeAll() && status === 'pending' ? `<div class="approval-actions">
+                <button class="btn btn-primary btn-xs" onclick="approveDocument(${origIdx},'approved')">✅ Approve</button>
+                <button class="btn btn-danger btn-xs" onclick="approveDocument(${origIdx},'rejected')">❌ Reject</button>
+            </div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function approveDocument(index, status) {
+    const comment = prompt(status === 'approved' ? 'Comment (optional):' : 'Rejection reason:');
+    if (status === 'rejected' && !comment) { alert('Provide a reason.'); return; }
+    const documents = getData('documents', []);
+    documents[index].approvalStatus = status;
+    documents[index].approvalComment = comment || '';
+    documents[index].approvedBy = currentUser.name;
+    documents[index].approvalDate = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    setData('documents', documents);
+    createNotification(documents[index].email, `document_${status}`, `Your document "${documents[index].title}" was ${status}`, { from: currentUser.name, fromRole: currentUser.role, comment: comment || '' });
+    renderDocApprovals();
+    alert(`Document ${status}! ✅`);
+}
+
+// ============ EMPLOYEE PROFILES ============
+let viewingProfile = null;
+
+function renderProfile(targetEmail) {
+    const email = targetEmail || currentUser.email;
+    const user = USERS().find(u => u.email === email);
+    if (!user) return;
+    viewingProfile = email;
+    const container = document.getElementById('profileContent');
+    const profiles = getData('profiles', {});
+    const profile = profiles[email] || {};
+    const initials = user.name.split(' ').map(w => w[0]).join('');
+    const avColor = user.role === 'CEO' ? '#7c3aed' : user.role === 'CTO' ? '#2563eb' : '#10b981';
+
+    const tk = todayKey();
+    const month = tk.slice(0, 7);
+    const records = getData('records', {});
+    const leaves = getData('leaves', []);
+    const tasks = getData('tasks', {});
+    let present = 0, absent = 0, sick = 0, casual = 0, totalTasks = 0, completedTasks = 0;
+    Object.keys(records).forEach(date => {
+        if (date.startsWith(month)) {
+            if (records[date][email] && records[date][email].checkIn) present++; else absent++;
+        }
+    });
+    leaves.filter(l => l.email === email && l.date.startsWith(month)).forEach(l => { if (l.type === 'sick') sick++; else casual++; });
+    Object.keys(tasks).forEach(date => {
+        if (date.startsWith(month) && tasks[date][email] && tasks[date][email].tasks) {
+            tasks[date][email].tasks.forEach(t => { totalTasks++; if (t.status === 'completed') completedTasks++; });
+        }
+    });
+
+    let html = `<div class="profile-card">
+        <img src="${getUserPhoto(email)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid ${avColor};">
+        <div class="profile-info">
+            <h2>${user.name}</h2>
+            <div class="profile-role">${user.role === 'CEO' ? '👑' : user.role === 'CTO' ? '⚙️' : '💼'} ${user.role}</div>
+            <div class="profile-detail">📧 ${user.email}</div>
+            ${profile.phone ? `<div class="profile-detail">📱 ${profile.phone}</div>` : ''}
+            ${profile.department ? `<div class="profile-detail">🏢 ${profile.department}</div>` : ''}
+            ${profile.designation ? `<div class="profile-detail">💼 ${profile.designation}</div>` : ''}
+            ${profile.joinedDate ? `<div class="profile-detail">📅 Joined: ${profile.joinedDate}</div>` : ''}
+        </div>
+    </div>`;
+
+    html += `<div class="profile-stats">
+        <div class="profile-stat"><div class="ps-value">${present}</div><div class="ps-label">Present This Month</div></div>
+        <div class="profile-stat"><div class="ps-value">${absent}</div><div class="ps-label">Absent This Month</div></div>
+        <div class="profile-stat"><div class="ps-value">${sick + casual}</div><div class="ps-label">Leaves This Month</div></div>
+        <div class="profile-stat"><div class="ps-value">${totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%</div><div class="ps-label">Task Completion Rate</div></div>
+        <div class="profile-stat"><div class="ps-value">${completedTasks}/${totalTasks}</div><div class="ps-label">Tasks Done</div></div>
+    </div>`;
+
+    if (email === currentUser.email || canSeeAll()) {
+        const phone = profile.phone || '';
+        const dept = profile.department || '';
+        const desig = profile.designation || '';
+        const joined = profile.joinedDate || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        if (email === currentUser.email) {
+            html += `<div class="profile-edit-form">
+                <h4 style="margin-bottom:12px;">✏️ Edit Profile</h4>
+                <div class="form-row">
+                    <div class="form-group"><label>Phone</label><input type="tel" id="profPhone" value="${escapeHtml(phone)}" placeholder="Phone number"></div>
+                    <div class="form-group"><label>Department</label><input type="text" id="profDept" value="${escapeHtml(dept)}" placeholder="Department"></div>
+                    <div class="form-group"><label>Designation</label><input type="text" id="profDesig" value="${escapeHtml(desig)}" placeholder="Designation"></div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="saveMyProfile()">💾 Save Profile</button>
+            </div>`;
+        }
+    }
+
+    html += '<div class="profile-activity"><h4 style="margin-bottom:12px;">📋 Recent Activity</h4>';
+    const activities = [];
+    const recentRecords = Object.keys(records).filter(d => d.startsWith(month)).sort().reverse().slice(0, 5);
+    recentRecords.forEach(d => {
+        if (records[d][email]) activities.push({ icon: '✅', bg: 'var(--primary-light)', text: `Checked in on ${d} at ${records[d][email].checkIn}`, time: d });
+    });
+    leaves.filter(l => l.email === email && l.date.startsWith(month)).slice(0, 5).forEach(l => {
+        activities.push({ icon: '🏖️', bg: '#dbeafe', text: `${l.type === 'sick' ? 'Sick' : 'Casual'} leave on ${l.date}`, time: l.date });
+    });
+    Object.keys(tasks).filter(d => d.startsWith(month)).sort().reverse().slice(0, 5).forEach(d => {
+        if (tasks[d][email]) activities.push({ icon: '📝', bg: '#fef3c7', text: `Submitted ${tasks[d][email].tasks.length} task(s) on ${d}`, time: d });
+    });
+    activities.sort((a, b) => b.time.localeCompare(a.time));
+    if (activities.length === 0) {
+        html += '<div style="text-align:center;padding:20px;color:var(--text-light);font-size:13px;">No recent activity</div>';
+    } else {
+        activities.slice(0, 10).forEach(a => {
+            html += `<div class="activity-item">
+                <div class="activity-icon" style="background:${a.bg}">${a.icon}</div>
+                <div class="activity-text">${a.text}</div>
+                <div class="activity-time">${a.time}</div>
+            </div>`;
+        });
+    }
+    html += '</div>';
+
+    if (canSeeAll() && email !== currentUser.email) {
+        html += `<div style="margin-top:16px;"><button class="btn btn-secondary btn-sm" onclick="renderProfileList()">← Back to All Employees</button></div>`;
+    }
+
+    container.innerHTML = html;
+}
+
+function saveMyProfile() {
+    const profiles = getData('profiles', {});
+    if (!profiles[currentUser.email]) profiles[currentUser.email] = {};
+    profiles[currentUser.email].phone = document.getElementById('profPhone').value.trim();
+    profiles[currentUser.email].department = document.getElementById('profDept').value.trim();
+    profiles[currentUser.email].designation = document.getElementById('profDesig').value.trim();
+    if (!profiles[currentUser.email].joinedDate) profiles[currentUser.email].joinedDate = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    setData('profiles', profiles);
+    renderProfile();
+    alert('Profile saved! ✅');
+}
+
+function renderProfileList() {
+    const container = document.getElementById('profileContent');
+    const users = USERS();
+    const profiles = getData('profiles', {});
+    let html = '<h3 style="margin-bottom:16px;">👥 All Employees</h3><div class="employee-grid">';
+    users.forEach(u => {
+        const p = profiles[u.email] || {};
+        html += `<div class="employee-mini-card" onclick="renderProfile('${u.email}')">
+            <div class="em-header">
+                <img src="${getUserPhoto(u.email)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">
+                <div><div class="em-name">${u.name}</div><div class="em-role">${u.role}${p.designation ? ' • ' + p.designation : ''}</div></div>
+            </div>
+            <div class="em-stats">
+                <span>📧 ${u.email}</span>
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ============ PAYROLL ============
+function renderPayroll() {
+    const month = document.getElementById('payrollMonth').value;
+    if (!month) return;
+    const records = getData('records', {});
+    const leaves = getData('leaves', []);
+    const salaryData = getData('salary', {});
+    const users = canSeeAll() ? USERS() : [currentUser];
+
+    const year = parseInt(month.split('-')[0]);
+    const mon = parseInt(month.split('-')[1]) - 1;
+    const daysInMonth = new Date(year, mon + 1, 0).getDate();
+    let weekdays = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+        const day = new Date(year, mon, d).getDay();
+        if (day !== 0 && day !== 6) weekdays++;
+    }
+
+    let totalEarned = 0, totalDeduction = 0;
+    let html = '';
+    users.forEach(u => {
+        let present = 0, sick = 0, casual = 0;
+        Object.keys(records).forEach(date => {
+            if (date.startsWith(month) && records[date][u.email] && records[date][u.email].checkIn) present++;
+        });
+        leaves.filter(l => l.email === u.email && l.date.startsWith(month)).forEach(l => { if (l.type === 'sick') sick++; else casual++; });
+        const absent = weekdays - present - sick - casual;
+        const netDays = present + (sick * 0.5);
+        const salary = salaryData[u.email] || 0;
+        const dailyRate = salary > 0 ? salary / weekdays : 0;
+        const earned = Math.round(dailyRate * netDays);
+        const deduction = Math.round(dailyRate * (absent > 0 ? absent : 0));
+        const netPay = earned - deduction;
+        totalEarned += earned;
+        totalDeduction += deduction;
+
+        html += `<tr>
+            <td><strong>${u.name}</strong></td>
+            <td><span class="badge ${u.role === 'CEO' ? 'badge-ceo' : u.role === 'CTO' ? 'badge-cto' : 'badge-emp'}">${u.role}</span></td>
+            <td>${weekdays}</td>
+            <td><span class="badge badge-present">${present}</span></td>
+            <td>${absent > 0 ? `<span class="badge badge-absent">${absent}</span>` : '0'}</td>
+            <td>${sick > 0 ? `<span class="badge badge-sick">${sick}</span>` : '0'} ${casual > 0 ? `<span class="badge badge-casual">${casual}</span>` : ''}</td>
+            <td><strong>${netDays.toFixed(1)}</strong></td>
+            <td class="no-print"><input type="number" class="salary-input" value="${salary}" onchange="saveSalary('${u.email}', this.value)" min="0" placeholder="₹0"></td>
+            <td class="salary">₹${earned.toLocaleString()}</td>
+            <td style="color:var(--danger);">₹${deduction.toLocaleString()}</td>
+            <td class="salary" style="font-size:15px;">₹${netPay.toLocaleString()}</td>
+        </tr>`;
+    });
+    document.getElementById('payrollTable').innerHTML = html;
+
+    const summaryHtml = `<div class="ps-card"><div class="ps-val" style="color:var(--primary);">₹${totalEarned.toLocaleString()}</div><div class="ps-lbl">Total Earned</div></div>
+        <div class="ps-card"><div class="ps-val" style="color:var(--danger);">₹${totalDeduction.toLocaleString()}</div><div class="ps-lbl">Total Deductions</div></div>
+        <div class="ps-card"><div class="ps-val" style="color:var(--info);">₹${(totalEarned - totalDeduction).toLocaleString()}</div><div class="ps-lbl">Total Net Pay</div></div>
+        <div class="ps-card"><div class="ps-val">${weekdays}</div><div class="ps-lbl">Working Days</div></div>`;
+    document.getElementById('payrollSummary').innerHTML = summaryHtml;
+}
+
+function saveSalary(email, value) {
+    const salaryData = getData('salary', {});
+    salaryData[email] = parseFloat(value) || 0;
+    setData('salary', salaryData);
+    renderPayroll();
+}
+
+function populatePayrollMonth() {
+    const sel = document.getElementById('payrollMonth');
+    sel.innerHTML = '';
+    const now = new Date();
+    for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        sel.innerHTML += `<option value="${d.toISOString().slice(0,7)}">${d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</option>`;
+    }
+}
+
+// ============ AUTO-RESTORE SESSION ============
+(function restoreSession() {
+    if (currentUser) {
+        const validUser = USERS().find(u => u.email === currentUser.email && u.password === currentUser.password);
+        if (validUser) {
+            currentUser = validUser;
+            localStorage.setItem('nxt360_session', JSON.stringify(currentUser));
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('dashboardPage').style.display = 'block';
+            initDashboard(false);
+        } else {
+            currentUser = null;
+            localStorage.removeItem('nxt360_session');
+        }
+    }
+})();
 </script>
 </body>
 </html>
