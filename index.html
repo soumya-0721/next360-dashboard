@@ -413,6 +413,7 @@
             .profile-card { flex-direction: column; text-align: center; }
             .profile-stats { flex-wrap: wrap; }
             .notif-dropdown { width: calc(100vw - 24px); right: -12px; }
+            .notif-toast { right: 12px; left: 12px; max-width: none; top: 70px; }
             .chart-grid { grid-template-columns: 1fr; }
             .bday-grid { grid-template-columns: 1fr; }
             .settings-grid { grid-template-columns: 1fr; }
@@ -420,6 +421,15 @@
             .login-logo img.logo-img { width: 60px; height: 60px; }
             .login-logo h1 { font-size: 18px; }
             .quick-grid { grid-template-columns: 1fr; }
+            .selfie-box { padding: 20px; }
+            .selfie-preview, .selfie-captured { width: 100%; height: auto; aspect-ratio: 4/3; }
+            .chat-container { height: 380px; }
+            .chat-input-row { flex-wrap: wrap; }
+            .chat-input-row input { flex: 1; min-width: 0; }
+            .donut-container { flex-wrap: wrap; justify-content: center; }
+            .approval-tabs { overflow-x: auto; flex-wrap: nowrap; }
+            .approval-tabs button { white-space: nowrap; font-size: 11px; padding: 6px 10px; }
+            .employee-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 480px) {
@@ -429,6 +439,9 @@
             .actions-row .btn { min-width: 100%; }
             .welcome-banner .clock-big { font-size: 24px; }
             .tabs { overflow-x: auto; flex-wrap: nowrap; }
+            .selfie-preview, .selfie-captured { width: 280px; height: 210px; }
+            .chat-container { height: 320px; }
+            .notif-toast { top: 60px; font-size: 13px; }
         }
     </style>
 </head>
@@ -931,12 +944,18 @@ function forceLogout() {
     document.getElementById('selfieModal').classList.remove('open');
     const tk = todayKey();
     const records = getData('records', {});
+    const logoutTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     if (!records[tk]) records[tk] = {};
     if (!records[tk][currentUser.email]) records[tk][currentUser.email] = {};
     if (records[tk][currentUser.email].checkIn && !records[tk][currentUser.email].checkOut) {
-        records[tk][currentUser.email].checkOut = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        records[tk][currentUser.email].checkOut = logoutTime;
     }
     setData('records', records);
+    if (currentUser.role !== 'CEO') {
+        USERS().filter(u => u.role === 'CEO' || u.role === 'CTO').forEach(u => {
+            createNotification(u.email, 'employee_logout', `${currentUser.name} has logged out at ${logoutTime}`, { from: currentUser.name, fromRole: currentUser.role });
+        });
+    }
     currentUser = null;
     localStorage.removeItem('nxt360_session');
     loginSelfiePending = false;
@@ -999,8 +1018,9 @@ function initDashboard(freshLogin) {
     }
 
     if (freshLogin && currentUser.role !== 'CEO') {
-        USERS().filter(u => u.role === 'CEO').forEach(u => {
-            createNotification(u.email, 'employee_login', `${currentUser.name} has logged in`, { from: currentUser.name, fromRole: currentUser.role });
+        const loginTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        USERS().filter(u => u.role === 'CEO' || u.role === 'CTO').forEach(u => {
+            createNotification(u.email, 'employee_login', `${currentUser.name} has logged in at ${loginTime}`, { from: currentUser.name, fromRole: currentUser.role });
         });
     }
 
@@ -1408,7 +1428,8 @@ function renderNotifications() {
         else if (n.type === 'document_approved') { text = `<strong>${n.from}</strong> approved your document`; icon = '📄'; }
         else if (n.type === 'document_rejected') { text = `<strong>${n.from}</strong> rejected your document`; icon = '❌'; }
         else if (n.type === 'document_submitted') { text = `<strong>${n.from}</strong> submitted a document for approval`; icon = '📄'; }
-        else if (n.type === 'employee_login') { text = `<strong>${n.from}</strong> (${n.fromRole}) has logged in`; icon = '🔐'; }
+        else if (n.type === 'employee_login') { text = `<strong>${n.from}</strong> (${n.fromRole}) logged in`; icon = '🔐'; }
+        else if (n.type === 'employee_logout') { text = `<strong>${n.from}</strong> (${n.fromRole}) logged out`; icon = '🚪'; }
         else if (n.type === 'work_updated') { text = `<strong>${n.from}</strong> (${n.fromRole}) has updated work for <strong>${n.date}</strong>`; icon = '💼'; }
         else { text = n.comment || 'Notification'; }
         return `<div class="notif-item ${n.read ? '' : 'unread'}" onclick="readNotif(${n.id})">
