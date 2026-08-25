@@ -9,6 +9,8 @@
     <meta http-equiv="Expires" content="0">
     <meta http-equiv="Permissions-Policy" content="camera=self, microphone=self">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
     <style>
         :root {
             --primary: #10b981;
@@ -759,8 +761,57 @@ let currentUser = JSON.parse(localStorage.getItem('nxt360_session') || 'null');
 
 // ============ STORAGE ============
 function getData(k, fb) { try { const v = localStorage.getItem('nxt360_' + k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
-function setData(k, v) { localStorage.setItem('nxt360_' + k, JSON.stringify(v)); }
-function todayKey() { return new Date().toISOString().slice(0, 10); }
+function setData(k, v) {
+    localStorage.setItem('nxt360_' + k, JSON.stringify(v));
+    if (fbReady && FB_KEYS.includes(k)) {
+        db.ref('nxt360/' + k).set(v).catch(e => console.error('FB write error:', k, e));
+    }
+}
+function todayKey() {
+    const now = new Date();
+    return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+}
+
+// ============ FIREBASE CROSS-DEVICE SYNC ============
+let db = null;
+let fbReady = false;
+const FB_KEYS = ['records', 'leaves', 'selfies', 'notifications', 'chat', 'profiles', 'salary', 'tasks', 'workUpdates'];
+
+const FIREBASE_CONFIG = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
+function initFirebaseSync() {
+    try {
+        if (!FIREBASE_CONFIG.apiKey || FIREBASE_CONFIG.apiKey === 'YOUR_API_KEY') {
+            console.warn('Firebase not configured. Using localStorage only. See FIREBASE_CONFIG in code.');
+            return;
+        }
+        firebase.initializeApp(FIREBASE_CONFIG);
+        db = firebase.database();
+        fbReady = true;
+        FB_KEYS.forEach(k => {
+            db.ref('nxt360/' + k).on('value', snap => {
+                if (snap.exists()) {
+                    localStorage.setItem('nxt360_' + k, JSON.stringify(snap.val()));
+                    if (document.getElementById('dashboardPage') && document.getElementById('dashboardPage').style.display === 'block') {
+                        renderStats(); renderToday(); renderTeam(); updateCheckButtons();
+                    }
+                }
+            });
+        });
+        console.log('Firebase sync enabled');
+    } catch (e) {
+        console.error('Firebase init failed:', e);
+    }
+}
+initFirebaseSync();
 
 // ============ ACCESS CONTROL ============
 function canSeeAll() { return currentUser && (currentUser.role === 'CEO' || currentUser.role === 'CTO'); }
