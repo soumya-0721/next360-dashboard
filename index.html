@@ -499,7 +499,7 @@
         <div class="welcome-banner">
             <div>
                 <h2 id="welcomeMsg">Good Morning!</h2>
-                <p>Office timings: 10:00 AM — 6:00 PM</p>
+                <p>Office timings: Available 24/7</p>
             </div>
             <div style="text-align:right">
                 <div class="clock-big" id="bigClock"></div>
@@ -866,7 +866,13 @@ function handleLogin(e) {
 }
 
 function handleLogout() {
-    openSelfieModal('logout');
+    const todaySelfies = getTodaySelfies(currentUser.email);
+    const hasLogoutSelfie = todaySelfies.some(s => s.type === 'logout');
+    if (hasLogoutSelfie) {
+        forceLogout();
+    } else {
+        openSelfieModal('logout');
+    }
 }
 
 function forceLogout() {
@@ -942,33 +948,26 @@ function initDashboard(freshLogin) {
     }
 
     if (freshLogin && currentUser.role !== 'CEO') {
-        const now = new Date();
-        const totalMinutes = now.getHours() * 60 + now.getMinutes();
-        const isLate = totalMinutes > 10 * 60 + 20;
-        const msg = isLate
-            ? `${currentUser.name} logged in late (after 10:20 AM) — no check-in available`
-            : `${currentUser.name} has logged in`;
         USERS().filter(u => u.role === 'CEO').forEach(u => {
-            createNotification(u.email, 'employee_login', msg, { from: currentUser.name, fromRole: currentUser.role });
+            createNotification(u.email, 'employee_login', `${currentUser.name} has logged in`, { from: currentUser.name, fromRole: currentUser.role });
         });
     }
 
     if (freshLogin) {
-        loginSelfiePending = true;
-        document.getElementById('btnCheckIn').disabled = true;
-        document.getElementById('btnCheckOut').disabled = true;
-        document.getElementById('btnCheckIn').style.opacity = '0.5';
-        document.getElementById('btnCheckOut').style.opacity = '0.5';
-        setTimeout(() => openSelfieModal('login'), 500);
+        const todaySelfies = getTodaySelfies(currentUser.email);
+        const hasLoginSelfie = todaySelfies.some(s => s.type === 'login');
+        if (hasLoginSelfie) {
+            loginSelfiePending = false;
+        } else {
+            loginSelfiePending = true;
+            document.getElementById('btnCheckIn').disabled = true;
+            document.getElementById('btnCheckOut').disabled = true;
+            document.getElementById('btnCheckIn').style.opacity = '0.5';
+            document.getElementById('btnCheckOut').style.opacity = '0.5';
+            setTimeout(() => openSelfieModal('login'), 500);
+        }
     } else {
         loginSelfiePending = false;
-        if (currentUser.role !== 'CEO' && currentUser.role !== 'CTO') {
-            const now = new Date();
-            const totalMinutes = now.getHours() * 60 + now.getMinutes();
-            if (totalMinutes > 10 * 60 + 20) {
-                setTimeout(() => showToast('⚠️ Late Login', 'You logged in after 10:20 AM. Check-in is not available today.'), 1500);
-            }
-        }
     }
 }
 
@@ -981,9 +980,7 @@ function updateClock() {
     document.getElementById('todayDate').textContent = date;
     document.getElementById('todayLabel').textContent = date;
     const h = now.getHours();
-    document.getElementById('officeStatus').innerHTML = (h >= 10 && h < 18)
-        ? '<span style="color:#059669">🟢 Office Open</span>'
-        : '<span style="color:#ef4444">🔴 Office Closed</span>';
+    document.getElementById('officeStatus').innerHTML = '<span style="color:#059669">🟢 Office Open</span>';
     let g = 'Good Morning';
     if (h >= 12 && h < 17) g = 'Good Afternoon';
     else if (h >= 17) g = 'Good Evening';
@@ -1035,9 +1032,7 @@ function checkOut() {
 }
 
 function isCheckInAllowed() {
-    const now = new Date();
-    const totalMinutes = now.getHours() * 60 + now.getMinutes();
-    return totalMinutes >= 10 * 60 && totalMinutes <= 10 * 60 + 20;
+    return true;
 }
 
 function updateCheckButtons() {
@@ -1053,16 +1048,12 @@ function updateCheckButtons() {
     }
     const alreadyCheckedIn = !!(rec && rec.checkIn);
     const notCheckedOut = rec && rec.checkIn && !rec.checkOut;
-    const checkInDisabled = alreadyCheckedIn || !isCheckInAllowed();
+    const checkInDisabled = alreadyCheckedIn;
     document.getElementById('btnCheckIn').disabled = checkInDisabled;
     document.getElementById('btnCheckOut').disabled = !notCheckedOut;
     document.getElementById('btnCheckIn').style.opacity = checkInDisabled ? '0.5' : '1';
     document.getElementById('btnCheckOut').style.opacity = notCheckedOut ? '1' : '0.5';
-    if (!isCheckInAllowed() && !alreadyCheckedIn) {
-        document.getElementById('btnCheckIn').title = 'Check-in window closed (10:00 - 10:20 AM)';
-    } else {
-        document.getElementById('btnCheckIn').title = '';
-    }
+    document.getElementById('btnCheckIn').title = alreadyCheckedIn ? 'Already checked in today' : '';
 }
 
 // ============ TODAY TABLE ============
