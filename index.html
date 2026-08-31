@@ -877,6 +877,7 @@ function todayKey() {
 // ============ FIREBASE CROSS-DEVICE SYNC ============
 let db = null;
 let auth = null;
+let authAvailable = true;
 let fbReady = false;
 const FB_KEYS = ['records', 'leaves', 'selfies', 'notifications', 'chat', 'profiles', 'salary', 'tasks', 'workUpdates'];
 
@@ -1058,7 +1059,6 @@ async function getAllActiveSessions() {
 }
 
 // ============ FIREBASE AUTH MIGRATION ============
-let authAvailable = true;
 async function migrateUsersToFirebaseAuth() {
     if (!auth || !authAvailable) return;
     const users = USERS();
