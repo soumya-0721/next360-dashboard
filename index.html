@@ -839,10 +839,33 @@ let currentUser = JSON.parse(localStorage.getItem('nxt360_session') || 'null');
 
 // ============ STORAGE ============
 function getData(k, fb) { try { const v = localStorage.getItem('nxt360_' + k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
+function sanitizeFbKey(s) { return String(s).replace(/\./g, '_dot_'); }
+function desanitizeFbKey(s) { return String(s).replace(/_dot_/g, '.'); }
+function sanitizeForFirebase(obj) {
+    if (obj === null || obj === undefined) return obj;
+    if (typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(v => sanitizeForFirebase(v));
+    const out = {};
+    for (const [k, v] of Object.entries(obj)) {
+        out[sanitizeFbKey(k)] = sanitizeForFirebase(v);
+    }
+    return out;
+}
+function desanitizeFromFirebase(obj) {
+    if (obj === null || obj === undefined) return obj;
+    if (typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(v => desanitizeFromFirebase(v));
+    const out = {};
+    for (const [k, v] of Object.entries(obj)) {
+        out[desanitizeFbKey(k)] = desanitizeFromFirebase(v);
+    }
+    return out;
+}
 function setData(k, v) {
     localStorage.setItem('nxt360_' + k, JSON.stringify(v));
     if (fbReady && FB_KEYS.includes(k)) {
-        db.ref('nxt360/' + k).set(v).catch(e => console.error('FB write error:', k, e));
+        const sanitized = sanitizeForFirebase(v);
+        db.ref('nxt360/' + k).set(sanitized).catch(e => console.error('FB write error:', k, e));
     }
 }
 function todayKey() {
@@ -879,7 +902,8 @@ function initFirebaseSync() {
         FB_KEYS.forEach(k => {
             db.ref('nxt360/' + k).on('value', snap => {
                 if (snap.exists()) {
-                    localStorage.setItem('nxt360_' + k, JSON.stringify(snap.val()));
+                    const desanitized = desanitizeFromFirebase(snap.val());
+                    localStorage.setItem('nxt360_' + k, JSON.stringify(desanitized));
                     if (document.getElementById('dashboardPage') && document.getElementById('dashboardPage').style.display === 'block') {
                         renderStats(); renderToday(); renderTeam(); updateCheckButtons();
                     }
@@ -1298,19 +1322,26 @@ function initDashboard(freshLogin) {
 }
 
 function updateClock() {
+    if (!currentUser) return;
     const now = new Date();
     const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    document.getElementById('topClock').textContent = time;
-    document.getElementById('bigClock').textContent = time;
-    document.getElementById('todayDate').textContent = date;
-    document.getElementById('todayLabel').textContent = date;
+    const topClock = document.getElementById('topClock');
+    const bigClock = document.getElementById('bigClock');
+    const todayDate = document.getElementById('todayDate');
+    const todayLabel = document.getElementById('todayLabel');
+    const officeStatus = document.getElementById('officeStatus');
+    const welcomeMsg = document.getElementById('welcomeMsg');
+    if (topClock) topClock.textContent = time;
+    if (bigClock) bigClock.textContent = time;
+    if (todayDate) todayDate.textContent = date;
+    if (todayLabel) todayLabel.textContent = date;
     const h = now.getHours();
-    document.getElementById('officeStatus').innerHTML = '<span style="color:#059669">🟢 Office Open</span>';
+    if (officeStatus) officeStatus.innerHTML = '<span style="color:#059669">🟢 Office Open</span>';
     let g = 'Good Morning';
     if (h >= 12 && h < 17) g = 'Good Afternoon';
     else if (h >= 17) g = 'Good Evening';
-    document.getElementById('welcomeMsg').textContent = `${g}, ${currentUser.name}! 👋`;
+    if (welcomeMsg) welcomeMsg.textContent = `${g}, ${currentUser.name}! 👋`;
 }
 
 // ============ STATS ============
