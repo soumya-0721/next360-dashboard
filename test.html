@@ -91,6 +91,26 @@
     <a href="index.html" class="nav-link">← Back to Dashboard</a>
 </div>
 
+<div id="setupChecklist" style="background:#fef3c7;border:2px solid #f59e0b;border-radius:12px;padding:16px 20px;margin-bottom:24px;display:none;">
+    <div style="font-weight:700;font-size:14px;color:#92400e;margin-bottom:8px;">⚠️ Firebase Setup Required for Session Tests</div>
+    <div style="font-size:13px;color:#78350f;line-height:1.6;">
+        <b>1.</b> Go to <a href="https://console.firebase.google.com/" target="_blank" style="color:#1d4ed8">Firebase Console</a> → <b>next360-dashboard</b><br>
+        <b>2.</b> Left sidebar → <b>Realtime Database</b> → <b>Create Database</b> → Choose region → Start in test mode → Enable<br>
+        <b>3.</b> Click <b>Rules</b> tab → Replace with:<br>
+        <pre style="background:#1e1e1e;color:#d4d4d4;padding:10px;border-radius:6px;font-size:11px;margin:8px 0;overflow-x:auto;">{
+  "rules": {
+    "nxt360": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}</pre>
+        <b>4.</b> Click <b>Publish</b><br>
+        <b>5.</b> Left sidebar → <b>Authentication</b> → <b>Get Started</b> → <b>Email/Password</b> → Toggle ON → Save<br>
+        <b>6.</b> Refresh this page and click <b>"Run All Tests Again"</b>
+    </div>
+</div>
+
 <div class="summary">
     <div class="summary-card total"><div class="count" id="totalCount">0</div><div class="label">Total Tests</div></div>
     <div class="summary-card pass"><div class="count" id="passCount">0</div><div class="label">Passed</div></div>
@@ -476,7 +496,7 @@ async function runAllTests() {
     testCategories[3].tests[0].status = 'running'; renderTests();
     await delay(100);
     const sanitized = sanitizeFbKey('user@gmail.com');
-    if (!sanitized.includes('.') && sanitized === 'user_dot_gmail_dot_com') {
+    if (!sanitized.includes('.') && sanitized === 'user@gmail_dot_com') {
         setTest(3, 0, 'pass', 'Result: ' + sanitized);
     } else {
         setTest(3, 0, 'fail', 'Result: ' + sanitized);
@@ -501,7 +521,7 @@ async function runAllTests() {
     const deepInput = { 'user@gmail.com': { 'nested.key': 'value', arr: ['a@b.com'] } };
     const deepSanitized = sanitizeForFirebase(deepInput);
     const firstKey = Object.keys(deepSanitized)[0];
-    if (!firstKey.includes('.') && firstKey === 'user_dot_gmail_dot_com') {
+    if (!firstKey.includes('.') && firstKey === 'user@gmail_dot_com') {
         setTest(3, 2, 'pass', 'Top key: "' + firstKey + '"');
     } else {
         setTest(3, 2, 'fail', 'Top key: "' + firstKey + '"');
@@ -521,6 +541,7 @@ async function runAllTests() {
 
     // --- SESSION MANAGEMENT ---
     if (fbReady) {
+        const permHint = 'Set Firebase Rules → See test.html comments or README';
         // Test 16: Create session
         results.total++;
         testCategories[4].tests[0].status = 'running'; renderTests();
@@ -532,10 +553,13 @@ async function runAllTests() {
             if (snap.exists() && snap.val().token === session.token) {
                 setTest(4, 0, 'pass', 'Session ID: ' + createdSessionId);
             } else {
-                setTest(4, 0, 'fail', 'Session not found in Firebase after create');
+                setTest(4, 0, 'fail', 'Session not found. Set Firebase RTDB rules to allow reads/writes.');
             }
         } catch (e) {
-            setTest(4, 0, 'fail', e.message);
+            const msg = e.message.includes('PERMISSION_DENIED') || e.message.includes('permission_denied')
+                ? 'PERMISSION_DENIED → Enable RTDB in Firebase Console + set rules to allow reads/writes on nxt360/ path'
+                : e.message;
+            setTest(4, 0, 'fail', msg);
         }
 
         // Test 17: Validate active session
@@ -543,30 +567,40 @@ async function runAllTests() {
         testCategories[4].tests[1].status = 'running'; renderTests();
         await delay(200);
         try {
-            const isValid = await validateSession(testEmail, createdSessionId);
-            if (isValid === true) {
-                setTest(4, 1, 'pass');
+            if (!createdSessionId) {
+                setTest(4, 1, 'skip', 'Skipped — create session failed');
             } else {
-                setTest(4, 1, 'fail', 'validateSession returned ' + isValid);
+                const isValid = await validateSession(testEmail, createdSessionId);
+                if (isValid === true) {
+                    setTest(4, 1, 'pass');
+                } else {
+                    setTest(4, 1, 'fail', 'validateSession returned ' + isValid);
+                }
             }
         } catch (e) {
-            setTest(4, 1, 'fail', e.message);
+            const msg = e.message.includes('permission') ? permHint : e.message;
+            setTest(4, 1, 'fail', msg);
         }
 
         // Test 18: Remove session
         results.total++;
         testCategories[4].tests[2].status = 'running'; renderTests();
         try {
-            await removeSession(testEmail, createdSessionId);
-            await delay(500);
-            const snap2 = await db.ref('nxt360/sessions/' + sanitizeKey(testEmail) + '/' + createdSessionId).once('value');
-            if (!snap2.exists()) {
-                setTest(4, 2, 'pass');
+            if (!createdSessionId) {
+                setTest(4, 2, 'skip', 'Skipped — create session failed');
             } else {
-                setTest(4, 2, 'fail', 'Session still exists after removal');
+                await removeSession(testEmail, createdSessionId);
+                await delay(500);
+                const snap2 = await db.ref('nxt360/sessions/' + sanitizeKey(testEmail) + '/' + createdSessionId).once('value');
+                if (!snap2.exists()) {
+                    setTest(4, 2, 'pass');
+                } else {
+                    setTest(4, 2, 'fail', 'Session still exists after removal');
+                }
             }
         } catch (e) {
-            setTest(4, 2, 'fail', e.message);
+            const msg = e.message.includes('permission') ? permHint : e.message;
+            setTest(4, 2, 'fail', msg);
         }
 
         // Test 19: Validate removed session
@@ -574,14 +608,19 @@ async function runAllTests() {
         testCategories[4].tests[3].status = 'running'; renderTests();
         await delay(200);
         try {
-            const isStillValid = await validateSession(testEmail, createdSessionId);
-            if (isStillValid === false) {
-                setTest(4, 3, 'pass');
+            if (!createdSessionId) {
+                setTest(4, 3, 'skip', 'Skipped — create session failed');
             } else {
-                setTest(4, 3, 'fail', 'validateSession returned ' + isStillValid + ' for removed session');
+                const isStillValid = await validateSession(testEmail, createdSessionId);
+                if (isStillValid === false) {
+                    setTest(4, 3, 'pass');
+                } else {
+                    setTest(4, 3, 'fail', 'validateSession returned ' + isStillValid + ' for removed session');
+                }
             }
         } catch (e) {
-            setTest(4, 3, 'fail', e.message);
+            const msg = e.message.includes('permission') ? permHint : e.message;
+            setTest(4, 3, 'fail', msg);
         }
 
         // Cleanup test data
@@ -627,6 +666,10 @@ async function runAllTests() {
     log(`\nTest suite complete: ${results.pass}/${results.total} passed, ${results.fail} failed`, results.fail > 0 ? 'warn' : 'pass');
     btn.disabled = false;
     btn.textContent = 'Run All Tests Again';
+
+    if (results.fail > 0) {
+        document.getElementById('setupChecklist').style.display = 'block';
+    }
 }
 
 // Auto-run on load

@@ -1019,7 +1019,7 @@ async function removeAllUserSessions(email) {
 }
 
 function sanitizeKey(str) {
-    return str.replace(/[.#$[\]]/g, '_');
+    return sanitizeFbKey(str);
 }
 
 async function getActiveSessions(email) {
