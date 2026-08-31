@@ -828,11 +828,39 @@ const DEFAULT_USERS = [
     { name: "Srinitha", email: "srinitha@gmail.com", password: "srinitha107", role: "Employee" }
 ];
 
-// Initialize users in localStorage if not present
-if (!localStorage.getItem('nxt360_users')) {
-    localStorage.setItem('nxt360_users', JSON.stringify(DEFAULT_USERS));
+// ============ PASSWORD HASHING ============
+async function hashPassword(pass) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pass);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
 }
-function getUsers() { return JSON.parse(localStorage.getItem('nxt360_users') || JSON.stringify(DEFAULT_USERS)); }
+
+// Initialize users in localStorage with hashed passwords
+async function initUsers() {
+    const stored = localStorage.getItem('nxt360_users');
+    if (!stored) {
+        const hashedUsers = [];
+        for (const u of DEFAULT_USERS) {
+            const hash = await hashPassword(u.password);
+            hashedUsers.push({ name: u.name, email: u.email, passwordHash: hash, role: u.role });
+        }
+        localStorage.setItem('nxt360_users', JSON.stringify(hashedUsers));
+    } else {
+        const users = JSON.parse(stored);
+        let needsUpdate = false;
+        for (const u of users) {
+            if (u.password && !u.passwordHash) {
+                u.passwordHash = await hashPassword(u.password);
+                delete u.password;
+                needsUpdate = true;
+            }
+        }
+        if (needsUpdate) localStorage.setItem('nxt360_users', JSON.stringify(users));
+    }
+}
+
+function getUsers() { return JSON.parse(localStorage.getItem('nxt360_users') || '[]'); }
 function setUsers(u) { localStorage.setItem('nxt360_users', JSON.stringify(u)); }
 function USERS() { return getUsers(); }
 
@@ -917,6 +945,7 @@ function initFirebaseSync() {
         console.error('Firebase init failed:', e);
     }
 }
+initUsers();
 initFirebaseSync();
 if (auth) { migrateUsersToFirebaseAuth(); }
 
@@ -1064,13 +1093,14 @@ async function migrateUsersToFirebaseAuth() {
     const users = USERS();
     for (const u of users) {
         try {
-            await auth.createUserWithEmailAndPassword(u.email, u.password + '_fb');
+            const fbPass = u.passwordHash ? u.passwordHash.slice(0, 12) + '_fb' : 'default_fb';
+            await auth.createUserWithEmailAndPassword(u.email, fbPass);
             console.log('Created Firebase Auth user:', u.email);
         } catch (e) {
             if (e.code === 'auth/email-already-in-use') {
                 console.log('Firebase Auth user exists:', u.email);
             } else if (e.code === 'auth/configuration-not-found' || e.code === 'auth/operation-not-allowed') {
-                console.log('Firebase Auth not enabled in console. Login still works via localStorage. To enable: Firebase Console → Authentication → Email/Password → Enable');
+                console.log('Firebase Auth not enabled in console. Login still works via localStorage.');
                 authAvailable = false;
                 break;
             } else {
@@ -1142,11 +1172,9 @@ function togglePassword() {
     }
 }
 
-function quickLogin(email, password) {
+function quickLogin(email) {
     document.getElementById('loginEmail').value = email;
-    document.getElementById('loginPassword').value = password;
-    document.getElementById('loginPassword').type = 'text';
-    document.querySelector('.pass-toggle').textContent = '🙈';
+    document.getElementById('loginPassword').focus();
 }
 
 function renderQuickLogin() {
@@ -1154,7 +1182,7 @@ function renderQuickLogin() {
     const grid = document.getElementById('quickLoginGrid');
     grid.innerHTML = users.filter(u => u.role !== 'CEO' && u.role !== 'CTO').map(u => {
         const icon = '💼';
-        return `<button type="button" class="quick-btn" onclick="quickLogin('${u.email}', '${u.password}')">
+        return `<button type="button" class="quick-btn" onclick="quickLogin('${u.email}')">
             <div class="q-name">${icon} ${u.name.split(' ')[0]}</div>
             <div class="q-role">${u.role}</div>
         </button>`;
@@ -1165,7 +1193,8 @@ async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim().toLowerCase();
     const pass = document.getElementById('loginPassword').value.trim();
-    const user = USERS().find(u => u.email === email && u.password === pass);
+    const passHash = await hashPassword(pass);
+    const user = USERS().find(u => u.email === email && u.passwordHash === passHash);
     if (!user) {
         const err = document.getElementById('loginError');
         err.textContent = 'Invalid email or password. Check case-sensitive password!';
@@ -1173,15 +1202,16 @@ async function handleLogin(e) {
         return;
     }
     currentUser = user;
-    localStorage.setItem('nxt360_session', JSON.stringify(currentUser));
+    const sessionData = { name: user.name, email: user.email, role: user.role, passwordHash: user.passwordHash };
+    localStorage.setItem('nxt360_session', JSON.stringify(sessionData));
     try {
         if (auth && authAvailable) {
             try {
-                await auth.signInWithEmailAndPassword(user.email, user.password + '_fb');
+                await auth.signInWithEmailAndPassword(user.email, user.passwordHash.slice(0, 12) + '_fb');
             } catch (fbErr) {
                 if (fbErr.code === 'auth/user-not-found') {
                     try {
-                        await auth.createUserWithEmailAndPassword(user.email, user.password + '_fb');
+                        await auth.createUserWithEmailAndPassword(user.email, user.passwordHash.slice(0, 12) + '_fb');
                     } catch (createErr) {
                         if (createErr.code === 'auth/configuration-not-found' || createErr.code === 'auth/operation-not-allowed') {
                             authAvailable = false;
@@ -1191,7 +1221,7 @@ async function handleLogin(e) {
                     }
                 } else if (fbErr.code === 'auth/wrong-password') {
                     try {
-                        await auth.createUserWithEmailAndPassword(user.email, user.password + '_fb');
+                        await auth.createUserWithEmailAndPassword(user.email, user.passwordHash.slice(0, 12) + '_fb');
                     } catch (createErr) {
                         if (createErr.code === 'auth/configuration-not-found' || createErr.code === 'auth/operation-not-allowed') {
                             authAvailable = false;
@@ -2183,7 +2213,7 @@ function renderSettings() {
             </div>
             <div class="s-field"><label>Full Name</label><input type="text" id="setName_${i}" value="${escapeHtml(u.name)}"></div>
             <div class="s-field"><label>Email</label><input type="email" id="setEmail_${i}" value="${escapeHtml(u.email)}"></div>
-            <div class="s-field"><label>Password</label><input type="text" id="setPass_${i}" value="${escapeHtml(u.password)}"></div>
+            <div class="s-field"><label>Password</label><input type="password" id="setPass_${i}" placeholder="Enter new password" autocomplete="new-password"></div>
             <div class="s-field"><label>Role</label><select id="setRole_${i}">
                 <option value="CEO" ${u.role==='CEO'?'selected':''}>CEO</option>
                 <option value="CTO" ${u.role==='CTO'?'selected':''}>CTO</option>
@@ -2208,7 +2238,7 @@ function renderSettings() {
     renderActiveSessions();
 }
 
-function saveProfile(index) {
+async function saveProfile(index) {
     const users = USERS();
     const oldName = users[index].name;
     const name = document.getElementById('setName_' + index).value.trim();
@@ -2221,9 +2251,15 @@ function saveProfile(index) {
     const salary = parseFloat(document.getElementById('setSalary_' + index).value) || 0;
     const bMonth = parseInt(document.getElementById('setBMonth_' + index).value);
     const bDay = parseInt(document.getElementById('setBDay_' + index).value);
-    if (!name || !email || !pass) { alert('Name, email and password are required!'); return; }
+    if (!name || !email) { alert('Name and email are required!'); return; }
+    if (pass && pass.length < 4) { alert('Password must be at least 4 characters!'); return; }
     if (bDay < 1 || bDay > 31) { alert('Invalid birthday day!'); return; }
-    users[index] = { name, email, password: pass, role };
+    if (pass) {
+        const passHash = await hashPassword(pass);
+        users[index] = { name, email, passwordHash: passHash, role };
+    } else {
+        users[index] = { name, email, passwordHash: users[index].passwordHash, role };
+    }
     setUsers(users);
     const bd = getBirthdays();
     if (oldName !== name) delete bd[oldName];
@@ -2280,11 +2316,12 @@ async function addNewMember() {
     const newName = 'New Member ' + (users.length + 1);
     const newEmail = 'member' + (users.length + 1) + '@gmail.com';
     const newPassword = 'password123';
-    users.push({ name: newName, email: newEmail, password: newPassword, role: 'Employee' });
+    const passHash = await hashPassword(newPassword);
+    users.push({ name: newName, email: newEmail, passwordHash: passHash, role: 'Employee' });
     setUsers(users);
     if (auth && authAvailable) {
         try {
-            await auth.createUserWithEmailAndPassword(newEmail, newPassword + '_fb');
+            await auth.createUserWithEmailAndPassword(newEmail, passHash.slice(0, 12) + '_fb');
         } catch (e) {
             if (e.code === 'auth/configuration-not-found' || e.code === 'auth/operation-not-allowed') {
                 authAvailable = false;
@@ -3273,7 +3310,7 @@ function populatePayrollMonth() {
 // ============ AUTO-RESTORE SESSION ============
 (async function restoreSession() {
     if (currentUser) {
-        const validUser = USERS().find(u => u.email === currentUser.email && u.password === currentUser.password);
+        const validUser = USERS().find(u => u.email === currentUser.email && (u.passwordHash === currentUser.passwordHash || u.passwordHash === currentUser.password));
         if (validUser) {
             const sessionId = localStorage.getItem('nxt360_session_id');
             const token = localStorage.getItem('nxt360_session_token');
@@ -3287,8 +3324,9 @@ function populatePayrollMonth() {
                     return;
                 }
             }
-            currentUser = validUser;
-            localStorage.setItem('nxt360_session', JSON.stringify(currentUser));
+            const sessionData = { name: validUser.name, email: validUser.email, role: validUser.role, passwordHash: validUser.passwordHash };
+            currentUser = sessionData;
+            localStorage.setItem('nxt360_session', JSON.stringify(sessionData));
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('dashboardPage').style.display = 'block';
             initDashboard(false);
