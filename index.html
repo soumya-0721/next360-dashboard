@@ -1216,13 +1216,7 @@ async function handleLogin(e) {
 }
 
 function handleLogout() {
-    const todaySelfies = getTodaySelfies(currentUser.email);
-    const hasLogoutSelfie = todaySelfies.some(s => s.type === 'logout');
-    if (hasLogoutSelfie) {
-        forceLogout();
-    } else {
-        openSelfieModal('logout');
-    }
+    forceLogout();
 }
 
 async function forceLogout() {
@@ -1254,6 +1248,8 @@ async function forceLogout() {
     localStorage.removeItem('nxt360_session_token');
     localStorage.removeItem('nxt360_session_id');
     loginSelfiePending = false;
+    checkInSelfiePending = false;
+    checkOutSelfiePending = false;
     selfieCaptured = false;
     document.getElementById('loginPage').style.display = 'flex';
     document.getElementById('dashboardPage').style.display = 'none';
@@ -1264,6 +1260,8 @@ async function forceLogout() {
 
 // ============ DASHBOARD INIT ============
 let loginSelfiePending = false;
+let checkInSelfiePending = false;
+let checkOutSelfiePending = false;
 let clockInterval = null;
 
 function getUserPhoto(email) {
@@ -1321,22 +1319,9 @@ function initDashboard(freshLogin) {
         });
     }
 
-    if (freshLogin) {
-        const todaySelfies = getTodaySelfies(currentUser.email);
-        const hasLoginSelfie = todaySelfies.some(s => s.type === 'login');
-        if (hasLoginSelfie) {
-            loginSelfiePending = false;
-        } else {
-            loginSelfiePending = true;
-            document.getElementById('btnCheckIn').disabled = true;
-            document.getElementById('btnCheckOut').disabled = true;
-            document.getElementById('btnCheckIn').style.opacity = '0.5';
-            document.getElementById('btnCheckOut').style.opacity = '0.5';
-            setTimeout(() => openSelfieModal('login'), 500);
-        }
-    } else {
-        loginSelfiePending = false;
-    }
+    loginSelfiePending = false;
+    checkInSelfiePending = false;
+    checkOutSelfiePending = false;
 }
 
 function updateClock() {
@@ -1390,19 +1375,18 @@ function checkIn() {
     const records = getData('records', {});
     if (!records[tk]) records[tk] = {};
     if (records[tk][currentUser.email] && records[tk][currentUser.email].checkIn) { alert('Already checked in today!'); return; }
-    records[tk][currentUser.email] = { checkIn: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), checkOut: '', status: 'present' };
-    setData('records', records);
-    updateCheckButtons(); renderStats(); renderToday(); renderTeam();
+    checkInSelfiePending = true;
+    updateCheckButtons();
+    openSelfieModal('checkin');
 }
 
 function checkOut() {
     const tk = todayKey();
     const records = getData('records', {});
     if (records[tk] && records[tk][currentUser.email] && records[tk][currentUser.email].checkIn && !records[tk][currentUser.email].checkOut) {
-        records[tk][currentUser.email].checkOut = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        setData('records', records);
+        checkOutSelfiePending = true;
         updateCheckButtons();
-        alert('Checked out successfully!');
+        openSelfieModal('checkout');
     } else { alert('You need to check in first!'); }
 }
 
@@ -1410,25 +1394,42 @@ function isCheckInAllowed() {
     return true;
 }
 
+function pendingCheckIn() {
+    const tk = todayKey();
+    const records = getData('records', {});
+    if (!records[tk]) records[tk] = {};
+    records[tk][currentUser.email] = { checkIn: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), checkOut: '', status: 'present' };
+    setData('records', records);
+    checkInSelfiePending = false;
+    updateCheckButtons();
+    renderStats(); renderToday(); renderTeam();
+    showToast('✅ Checked In', 'Your attendance has been recorded with selfie verification.');
+}
+
+function pendingCheckOut() {
+    const tk = todayKey();
+    const records = getData('records', {});
+    if (records[tk] && records[tk][currentUser.email]) {
+        records[tk][currentUser.email].checkOut = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        setData('records', records);
+        checkOutSelfiePending = false;
+        updateCheckButtons();
+        showToast('🚪 Checked Out', 'Your check-out has been recorded with selfie verification.');
+    }
+}
+
 function updateCheckButtons() {
     const tk = todayKey();
     const records = getData('records', {});
     const rec = records[tk] && records[tk][currentUser.email];
-    if (loginSelfiePending) {
-        document.getElementById('btnCheckIn').disabled = true;
-        document.getElementById('btnCheckOut').disabled = true;
-        document.getElementById('btnCheckIn').style.opacity = '0.5';
-        document.getElementById('btnCheckOut').style.opacity = '0.5';
-        return;
-    }
     const alreadyCheckedIn = !!(rec && rec.checkIn);
     const notCheckedOut = rec && rec.checkIn && !rec.checkOut;
-    const checkInDisabled = alreadyCheckedIn;
-    document.getElementById('btnCheckIn').disabled = checkInDisabled;
-    document.getElementById('btnCheckOut').disabled = !notCheckedOut;
-    document.getElementById('btnCheckIn').style.opacity = checkInDisabled ? '0.5' : '1';
-    document.getElementById('btnCheckOut').style.opacity = notCheckedOut ? '1' : '0.5';
-    document.getElementById('btnCheckIn').title = alreadyCheckedIn ? 'Already checked in today' : '';
+    document.getElementById('btnCheckIn').disabled = alreadyCheckedIn || checkInSelfiePending;
+    document.getElementById('btnCheckOut').disabled = !notCheckedOut || checkOutSelfiePending;
+    document.getElementById('btnCheckIn').style.opacity = (alreadyCheckedIn || checkInSelfiePending) ? '0.5' : '1';
+    document.getElementById('btnCheckOut').style.opacity = (!notCheckedOut || checkOutSelfiePending) ? '0.5' : '1';
+    document.getElementById('btnCheckIn').title = alreadyCheckedIn ? 'Already checked in today' : checkInSelfiePending ? 'Capturing selfie...' : '';
+    document.getElementById('btnCheckOut').title = !notCheckedOut ? '' : checkOutSelfiePending ? 'Capturing selfie...' : '';
 }
 
 // ============ TODAY TABLE ============
@@ -2466,8 +2467,15 @@ function openSelfieModal(type) {
     selfieCaptured = false;
     selfieFacingMode = 'user';
     selfieGeoData = null;
-    document.getElementById('selfieTitle').textContent = type === 'login' ? '📸 Capture Login Selfie' : '📸 Capture Logout Selfie';
-    document.getElementById('selfieSubtitle').textContent = type === 'login' ? 'This selfie is required for attendance verification' : 'Please capture a selfie before logging out';
+    const titles = {
+        checkin: { title: '📸 Check-In Selfie', subtitle: 'Capture a selfie to verify your attendance' },
+        checkout: { title: '📸 Check-Out Selfie', subtitle: 'Capture a selfie to complete your check-out' },
+        login: { title: '📸 Capture Login Selfie', subtitle: 'This selfie is required for attendance verification' },
+        logout: { title: '📸 Capture Logout Selfie', subtitle: 'Please capture a selfie before logging out' }
+    };
+    const t = titles[type] || titles.checkin;
+    document.getElementById('selfieTitle').textContent = t.title;
+    document.getElementById('selfieSubtitle').textContent = t.subtitle;
     document.getElementById('selfieCaptured').style.display = 'none';
     document.getElementById('selfieActions').style.display = 'flex';
     document.getElementById('selfieRetakeActions').style.display = 'none';
@@ -2480,16 +2488,24 @@ function openSelfieModal(type) {
     const camArea = document.getElementById('selfieCamArea');
     camArea.innerHTML = '<div class="selfie-preview" id="selfiePreviewArea"><video id="selfieVideo" autoplay playsinline muted></video><canvas id="selfieCanvas"></canvas><button class="cam-toggle" id="btnCamToggle" onclick="toggleCamera()" title="Switch Camera">🔄</button></div>';
 
-    const noCamBtn = type === 'logout'
-        ? '<button class="btn btn-danger btn-sm" style="margin-top:12px" onclick="forceLogout()">🚪 Logout Without Selfie</button>'
-        : '<button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="backToLogin()">⬅️ Back to Login</button>';
+    const noCamMsg = type === 'checkin' || type === 'checkout'
+        ? 'Camera is required for attendance selfie. Please enable camera access.'
+        : type === 'login' ? ' Selfie is mandatory to use the dashboard.' : '';
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        camArea.innerHTML = '<div class="selfie-no-cam"><div class="icon">📷</div><p>Camera not available.' + (type === 'login' ? ' Selfie is mandatory to use the dashboard.' : '') + '</p>' + noCamBtn + '</div>';
+        camArea.innerHTML = '<div class="selfie-no-cam"><div class="icon">📷</div><p>Camera not available.' + noCamMsg + '</p><button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="cancelSelfiePending()">⬅️ Go Back</button></div>';
         return;
     }
 
     startSelfieCamera();
+}
+
+function cancelSelfiePending() {
+    stopSelfieStream();
+    document.getElementById('selfieModal').classList.remove('open');
+    checkInSelfiePending = false;
+    checkOutSelfiePending = false;
+    updateCheckButtons();
 }
 
 function startSelfieCamera() {
@@ -2505,10 +2521,10 @@ function startSelfieCamera() {
         .catch(err => {
             console.log('Camera error:', err);
             const camArea = document.getElementById('selfieCamArea');
-            const noCamBtn = selfieType === 'logout'
-                ? '<button class="btn btn-danger btn-sm" style="margin-top:12px" onclick="forceLogout()">🚪 Logout Without Selfie</button>'
-                : '<button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="backToLogin()">⬅️ Back to Login</button>';
-            camArea.innerHTML = '<div class="selfie-no-cam"><div class="icon">📷</div><p>Camera permission denied.' + (selfieType === 'login' ? ' Selfie is mandatory to use the dashboard.' : '') + '</p>' + noCamBtn + '</div>';
+            const noCamMsg = selfieType === 'checkin' || selfieType === 'checkout'
+                ? 'Camera is required for attendance selfie. Please enable camera access.'
+                : selfieType === 'login' ? ' Selfie is mandatory to use the dashboard.' : '';
+            camArea.innerHTML = '<div class="selfie-no-cam"><div class="icon">📷</div><p>Camera permission denied.' + noCamMsg + '</p><button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="cancelSelfiePending()">⬅️ Go Back</button></div>';
         });
 }
 
@@ -2564,25 +2580,32 @@ function confirmSelfie() {
     selfies.push(selfieEntry);
     setData('selfies', selfies);
     selfieCaptured = true;
-    const wasLogout = selfieType === 'logout';
+    const geoMsg = selfieGeoData ? ` | 📍 ${selfieGeoData.address || selfieGeoData.lat + ', ' + selfieGeoData.lng}` : '';
     closeSelfieModal();
-    if (!wasLogout) {
+    if (selfieType === 'checkin') {
+        checkInSelfiePending = false;
+        pendingCheckIn();
+    } else if (selfieType === 'checkout') {
+        checkOutSelfiePending = false;
+        pendingCheckOut();
+    } else if (selfieType === 'login') {
         loginSelfiePending = false;
         updateCheckButtons();
-        const geoMsg = selfieGeoData ? ` | 📍 ${selfieGeoData.address || selfieGeoData.lat + ', ' + selfieGeoData.lng}` : '';
         showToast('📸 Selfie Captured', `Login selfie saved${geoMsg}`);
     }
 }
 
 function skipSelfie() {
-    showToast('⚠️ Selfie Required', 'You must capture a selfie. Returning to login.');
-    backToLogin();
+    showToast('⚠️ Selfie Required', 'You must capture a selfie for attendance.');
+    cancelSelfiePending();
 }
 
 function backToLogin() {
     stopSelfieStream();
     document.getElementById('selfieModal').classList.remove('open');
     loginSelfiePending = false;
+    checkInSelfiePending = false;
+    checkOutSelfiePending = false;
     currentUser = null;
     localStorage.removeItem('nxt360_session');
     document.getElementById('loginPage').style.display = 'flex';
@@ -2594,19 +2617,8 @@ function backToLogin() {
 
 function closeSelfieModal() {
     stopSelfieStream();
-    const wasLogout = selfieType === 'logout' && currentUser;
     document.getElementById('selfieModal').classList.remove('open');
     capturedSelfieData = null;
-    selfieType = 'login';
-    if (wasLogout && selfieCaptured) { forceLogout(); }
-    if (!wasLogout && !selfieCaptured) {
-        loginSelfiePending = false;
-    currentUser = null;
-    if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
-    localStorage.removeItem('nxt360_session');
-        document.getElementById('loginPage').style.display = 'flex';
-        document.getElementById('dashboardPage').style.display = 'none';
-    }
     selfieCaptured = false;
 }
 
