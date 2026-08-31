@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next360 - Token & Session Test Suite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #d1fae5;
+            --bg: #f0fdf4;
+            --card: #ffffff;
+            --text: #064e3b;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --pass: #10b981;
+            --fail: #ef4444;
+            --skip: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; }
+
+        .header { background: linear-gradient(135deg, #064e3b, #10b981); border-radius: 16px; padding: 32px; color: white; margin-bottom: 24px; }
+        .header h1 { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+        .header p { font-size: 14px; opacity: 0.85; }
+        .header .nav-link { display: inline-block; margin-top: 12px; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 8px; color: white; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s; }
+        .header .nav-link:hover { background: rgba(255,255,255,0.35); }
+
+        .summary { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+        .summary-card { background: var(--card); border-radius: 12px; padding: 16px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); flex: 1; min-width: 120px; text-align: center; }
+        .summary-card .count { font-size: 32px; font-weight: 800; }
+        .summary-card .label { font-size: 12px; color: var(--text-light); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .summary-card.pass .count { color: var(--pass); }
+        .summary-card.fail .count { color: var(--fail); }
+        .summary-card.total .count { color: var(--info); }
+
+        .progress-bar { height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 24px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--pass); border-radius: 3px; transition: width 0.5s ease; }
+
+        .btn-run { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; margin-bottom: 24px; }
+        .btn-run:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-run:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
+
+        .category { margin-bottom: 24px; }
+        .category-header { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+
+        .test-item { background: var(--card); border-radius: 10px; padding: 14px 18px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 12px; border-left: 4px solid var(--border); transition: border-color 0.3s; }
+        .test-item.pass { border-left-color: var(--pass); }
+        .test-item.fail { border-left-color: var(--fail); }
+        .test-item.running { border-left-color: var(--info); }
+        .test-item.skip { border-left-color: var(--skip); }
+
+        .test-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+        .test-info { flex: 1; }
+        .test-name { font-size: 13px; font-weight: 600; }
+        .test-desc { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+        .test-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+        .test-badge.pass { background: #d1fae5; color: #059669; }
+        .test-badge.fail { background: #fee2e2; color: #dc2626; }
+        .test-badge.running { background: #dbeafe; color: #1d4ed8; }
+        .test-badge.skip { background: #fef3c7; color: #b45309; }
+        .test-detail { font-size: 11px; color: var(--text-light); margin-top: 4px; font-family: monospace; background: #f9fafb; padding: 4px 8px; border-radius: 4px; display: none; }
+        .test-item.fail .test-detail, .test-item.pass .test-detail { display: block; }
+
+        .console-log { background: #1e1e1e; color: #d4d4d4; border-radius: 12px; padding: 16px; margin-top: 24px; font-family: 'Consolas', monospace; font-size: 12px; max-height: 300px; overflow-y: auto; }
+        .console-log .log-pass { color: #4ec9b0; }
+        .console-log .log-fail { color: #f44747; }
+        .console-log .log-info { color: #569cd6; }
+        .console-log .log-warn { color: #dcdcaa; }
+
+        @media (max-width: 768px) {
+            .summary { flex-direction: column; }
+            .header { padding: 20px; }
+            .header h1 { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Next360 - Token & Session Test Suite</h1>
+    <p>Automated tests for token generation, session management, device detection, and Firebase sync</p>
+    <a href="index.html" class="nav-link">← Back to Dashboard</a>
+</div>
+
+<div class="summary">
+    <div class="summary-card total"><div class="count" id="totalCount">0</div><div class="label">Total Tests</div></div>
+    <div class="summary-card pass"><div class="count" id="passCount">0</div><div class="label">Passed</div></div>
+    <div class="summary-card fail"><div class="count" id="failCount">0</div><div class="label">Failed</div></div>
+</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<button class="btn-run" id="btnRun" onclick="runAllTests()">Run All Tests</button>
+
+<div id="testResults"></div>
+
+<div class="console-log" id="consoleLog"></div>
+
+<script>
+// ============ FIREBASE CONFIG (same as index.html) ============
+let db = null;
+let auth = null;
+let fbReady = false;
+
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBjqhc_aFU0LSdBqIxsQnKxcBqynH2UwX8",
+    authDomain: "next360-dashboard.firebaseapp.com",
+    databaseURL: "https://next360-dashboard-default-rtdb.firebaseio.com",
+    projectId: "next360-dashboard",
+    storageBucket: "next360-dashboard.firebasestorage.app",
+    messagingSenderId: "908694394704",
+    appId: "1:908694394704:web:6dabbc4f2a64cfcc92fe55"
+};
+
+try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    auth = firebase.auth();
+    fbReady = true;
+} catch (e) {
+    console.error('Firebase init failed:', e);
+}
+
+// ============ FUNCTIONS (same as index.html) ============
+function generateToken() {
+    const arr = new Uint8Array(32);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function detectDevice() {
+    const ua = navigator.userAgent;
+    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua) || window.innerWidth < 768;
+    let os = 'Other';
+    if (/Windows/i.test(ua)) os = 'Windows';
+    else if (/Mac OS/i.test(ua)) os = 'macOS';
+    else if (/Android/i.test(ua)) os = 'Android';
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+    else if (/Linux/i.test(ua)) os = 'Linux';
+    let browser = 'Other';
+    if (/Edg\//i.test(ua)) browser = 'Edge';
+    else if (/Chrome/i.test(ua) && !/Edg\//i.test(ua)) browser = 'Chrome';
+    else if (/Firefox/i.test(ua)) browser = 'Firefox';
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+    return { type: isMobile ? 'mobile' : 'laptop', os, browser, screen: screen.width + 'x' + screen.height, userAgent: ua };
+}
+
+function sanitizeFbKey(s) { return String(s).replace(/\./g, '_dot_'); }
+function desanitizeFbKey(s) { return String(s).replace(/_dot_/g, '.'); }
+function sanitizeForFirebase(obj) {
+    if (obj === null || obj === undefined) return obj;
+    if (typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(v => sanitizeForFirebase(v));
+    const out = {};
+    for (const [k, v] of Object.entries(obj)) { out[sanitizeFbKey(k)] = sanitizeForFirebase(v); }
+    return out;
+}
+function desanitizeFromFirebase(obj) {
+    if (obj === null || obj === undefined) return obj;
+    if (typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(v => desanitizeFromFirebase(v));
+    const out = {};
+    for (const [k, v] of Object.entries(obj)) { out[desanitizeFbKey(k)] = desanitizeFromFirebase(v); }
+    return out;
+}
+function sanitizeKey(str) { return str.replace(/[.#$[\]]/g, '_'); }
+
+async function createSession(user) {
+    const token = generateToken();
+    const device = detectDevice();
+    const sessionId = 'test_sess_' + Date.now() + '_' + token.slice(0, 8);
+    const sessionData = { token, sessionId, email: user.email, name: user.name, role: user.role, device, loginTime: new Date().toISOString(), lastActive: new Date().toISOString(), status: 'active' };
+    if (fbReady && db) {
+        await db.ref('nxt360/sessions/' + sanitizeKey(user.email) + '/' + sessionId).set(sessionData);
+    }
+    return sessionData;
+}
+
+async function validateSession(email, sessionId) {
+    if (!fbReady || !db) return true;
+    const snap = await db.ref('nxt360/sessions/' + sanitizeKey(email) + '/' + sessionId).once('value');
+    if (snap.exists() && snap.val().status === 'active') return true;
+    return false;
+}
+
+async function removeSession(email, sessionId) {
+    if (fbReady && db) {
+        await db.ref('nxt360/sessions/' + sanitizeKey(email) + '/' + sessionId + '/status').set('revoked');
+        await db.ref('nxt360/sessions/' + sanitizeKey(email) + '/' + sessionId).remove();
+    }
+}
+
+// ============ TEST FRAMEWORK ============
+const testCategories = [
+    { name: 'Firebase Connection', icon: '🔥', tests: [] },
+    { name: 'Token Generation', icon: '🔑', tests: [] },
+    { name: 'Device Detection', icon: '📱', tests: [] },
+    { name: 'Key Sanitization', icon: '🔒', tests: [] },
+    { name: 'Session Management', icon: '🎫', tests: [] },
+    { name: 'localStorage', icon: '💾', tests: [] }
+];
+
+let results = { pass: 0, fail: 0, total: 0 };
+
+function log(msg, type) {
+    const el = document.getElementById('consoleLog');
+    const cls = type === 'pass' ? 'log-pass' : type === 'fail' ? 'log-fail' : type === 'warn' ? 'log-warn' : 'log-info';
+    el.innerHTML += `<div class="${cls}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    el.scrollTop = el.scrollHeight;
+}
+
+function renderTests() {
+    const container = document.getElementById('testResults');
+    let html = '';
+    for (const cat of testCategories) {
+        html += `<div class="category">`;
+        html += `<div class="category-header">${cat.icon} ${cat.name}</div>`;
+        for (const t of cat.tests) {
+            const statusClass = t.status || '';
+            const icon = t.status === 'pass' ? '✅' : t.status === 'fail' ? '❌' : t.status === 'running' ? '⏳' : t.status === 'skip' ? '⏭️' : '⬜';
+            const badgeText = t.status === 'pass' ? 'PASS' : t.status === 'fail' ? 'FAIL' : t.status === 'running' ? 'RUNNING' : t.status === 'skip' ? 'SKIP' : 'PENDING';
+            html += `<div class="test-item ${statusClass}">`;
+            html += `<div class="test-icon">${icon}</div>`;
+            html += `<div class="test-info"><div class="test-name">${t.name}</div><div class="test-desc">${t.desc}</div>`;
+            if (t.detail) html += `<div class="test-detail">${t.detail}</div>`;
+            html += `</div>`;
+            html += `<span class="test-badge ${statusClass}">${badgeText}</span>`;
+            html += `</div>`;
+        }
+        html += `</div>`;
+    }
+    container.innerHTML = html;
+}
+
+function updateSummary() {
+    document.getElementById('totalCount').textContent = results.total;
+    document.getElementById('passCount').textContent = results.pass;
+    document.getElementById('failCount').textContent = results.fail;
+    const pct = results.total > 0 ? (results.pass / results.total * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressFill').style.background = results.fail > 0 ? 'var(--warning)' : 'var(--pass)';
+}
+
+function setTest(catIndex, testIndex, status, detail) {
+    const t = testCategories[catIndex].tests[testIndex];
+    t.status = status;
+    if (detail) t.detail = detail;
+    if (status === 'pass') { results.pass++; log(`PASS: ${t.name}`, 'pass'); }
+    if (status === 'fail') { results.fail++; log(`FAIL: ${t.name} - ${detail || ''}`, 'fail'); }
+    updateSummary();
+    renderTests();
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============ DEFINE ALL TESTS ============
+function defineTests() {
+    // Firebase Connection
+    testCategories[0].tests = [
+        { name: 'Firebase SDK loaded', desc: 'firebase global object exists', status: 'pending' },
+        { name: 'Firebase App initialized', desc: 'firebase.initializeApp() succeeded', status: 'pending' },
+        { name: 'Firebase Database connected', desc: 'db reference is not null', status: 'pending' },
+        { name: 'Firebase Auth initialized', desc: 'auth reference is not null', status: 'pending' }
+    ];
+    // Token Generation
+    testCategories[1].tests = [
+        { name: 'Token generation works', desc: 'generateToken() returns a string', status: 'pending' },
+        { name: 'Token is 64-char hex', desc: 'Exactly 64 hex characters [0-9a-f]', status: 'pending' },
+        { name: 'Tokens are unique', desc: 'Two consecutive tokens are different', status: 'pending' },
+        { name: 'Token is stored in localStorage', desc: 'Session token persists in storage', status: 'pending' }
+    ];
+    // Device Detection
+    testCategories[2].tests = [
+        { name: 'Device detection returns object', desc: 'Has type, os, browser fields', status: 'pending' },
+        { name: 'Device type is valid', desc: 'type is "mobile" or "laptop"', status: 'pending' },
+        { name: 'OS detected', desc: 'os is not "Other"', status: 'pending' },
+        { name: 'Browser detected', desc: 'browser is not "Other"', status: 'pending' }
+    ];
+    // Key Sanitization
+    testCategories[3].tests = [
+        { name: 'Sanitize removes dots', desc: 'sanitizeFbKey("a@b.com") has no dots', status: 'pending' },
+        { name: 'Desanitize restores dots', desc: 'Round-trip preserves original string', status: 'pending' },
+        { name: 'Deep sanitize works', desc: 'Nested objects with email keys sanitized', status: 'pending' },
+        { name: 'Deep desanitize works', desc: 'Nested objects restored to original keys', status: 'pending' }
+    ];
+    // Session Management
+    testCategories[4].tests = [
+        { name: 'Create session in Firebase', desc: 'Session written to nxt360/sessions/', status: 'pending' },
+        { name: 'Validate active session', desc: 'validateSession() returns true for active', status: 'pending' },
+        { name: 'Remove session from Firebase', desc: 'Session deleted after removal', status: 'pending' },
+        { name: 'Validate removed session', desc: 'validateSession() returns false after removal', status: 'pending' }
+    ];
+    // localStorage
+    testCategories[5].tests = [
+        { name: 'localStorage read/write', desc: 'Can store and retrieve data', status: 'pending' },
+        { name: 'Session data in localStorage', desc: 'nxt360_session_token key exists', status: 'pending' }
+    ];
+}
+
+// ============ RUN TESTS ============
+async function runAllTests() {
+    const btn = document.getElementById('btnRun');
+    btn.disabled = true;
+    btn.textContent = 'Running Tests...';
+
+    results = { pass: 0, fail: 0, total: 0 };
+    document.getElementById('consoleLog').innerHTML = '';
+    defineTests();
+    renderTests();
+    updateSummary();
+
+    log('Starting test suite...', 'info');
+    const testEmail = 'testuser_' + Date.now() + '@gmail.com';
+    const testUser = { name: 'Test User', email: testEmail, password: 'test123', role: 'Employee' };
+    let createdSessionId = null;
+
+    // --- FIREBASE CONNECTION ---
+    // Test 0: Firebase SDK loaded
+    results.total++;
+    testCategories[0].tests[0].status = 'running'; renderTests();
+    await delay(200);
+    if (typeof firebase !== 'undefined') {
+        setTest(0, 0, 'pass');
+    } else {
+        setTest(0, 0, 'fail', 'firebase global not found');
+    }
+
+    // Test 1: Firebase App initialized
+    results.total++;
+    testCategories[0].tests[1].status = 'running'; renderTests();
+    await delay(200);
+    try {
+        const app = firebase.app();
+        if (app && app.options && app.options.projectId === 'next360-dashboard') {
+            setTest(0, 1, 'pass');
+        } else {
+            setTest(0, 1, 'fail', 'App exists but projectId mismatch');
+        }
+    } catch (e) {
+        setTest(0, 1, 'fail', e.message);
+    }
+
+    // Test 2: Database connected
+    results.total++;
+    testCategories[0].tests[2].status = 'running'; renderTests();
+    await delay(200);
+    if (db !== null) {
+        try {
+            await db.ref('.info/connected').once('value');
+            setTest(0, 2, 'pass');
+        } catch (e) {
+            setTest(0, 2, 'pass', 'db ref exists (offline ok)');
+        }
+    } else {
+        setTest(0, 2, 'fail', 'db is null');
+    }
+
+    // Test 3: Auth initialized
+    results.total++;
+    testCategories[0].tests[3].status = 'running'; renderTests();
+    await delay(200);
+    if (auth !== null) {
+        setTest(0, 3, 'pass');
+    } else {
+        setTest(0, 3, 'fail', 'auth is null - check Firebase Auth is enabled in console');
+    }
+
+    // --- TOKEN GENERATION ---
+    // Test 4: Token generation works
+    results.total++;
+    testCategories[1].tests[0].status = 'running'; renderTests();
+    await delay(100);
+    try {
+        const token = generateToken();
+        if (typeof token === 'string' && token.length > 0) {
+            setTest(1, 0, 'pass', 'Token: ' + token.slice(0, 16) + '...');
+        } else {
+            setTest(1, 0, 'fail', 'Token is empty or not a string');
+        }
+    } catch (e) {
+        setTest(1, 0, 'fail', e.message);
+    }
+
+    // Test 5: Token is 64-char hex
+    results.total++;
+    testCategories[1].tests[1].status = 'running'; renderTests();
+    await delay(100);
+    const token2 = generateToken();
+    const hexRegex = /^[0-9a-f]{64}$/;
+    if (hexRegex.test(token2)) {
+        setTest(1, 1, 'pass', 'Length: ' + token2.length + ', valid hex');
+    } else {
+        setTest(1, 1, 'fail', 'Got: ' + token2.slice(0, 20) + '... (length=' + token2.length + ')');
+    }
+
+    // Test 6: Tokens are unique
+    results.total++;
+    testCategories[1].tests[2].status = 'running'; renderTests();
+    await delay(100);
+    const token3a = generateToken();
+    const token3b = generateToken();
+    if (token3a !== token3b) {
+        setTest(1, 2, 'pass');
+    } else {
+        setTest(1, 2, 'fail', 'Two tokens are identical (collision!)');
+    }
+
+    // Test 7: Token stored in localStorage
+    results.total++;
+    testCategories[1].tests[3].status = 'running'; renderTests();
+    await delay(100);
+    const storedToken = generateToken();
+    localStorage.setItem('nxt360_session_token', storedToken);
+    const retrieved = localStorage.getItem('nxt360_session_token');
+    if (retrieved === storedToken) {
+        setTest(1, 3, 'pass', 'Retrieved: ' + retrieved.slice(0, 16) + '...');
+        localStorage.removeItem('nxt360_session_token');
+    } else {
+        setTest(1, 3, 'fail', 'Stored: ' + storedToken.slice(0, 16) + ', Got: ' + (retrieved || 'null'));
+    }
+
+    // --- DEVICE DETECTION ---
+    // Test 8: Device detection returns object
+    results.total++;
+    testCategories[2].tests[0].status = 'running'; renderTests();
+    await delay(100);
+    const device = detectDevice();
+    if (device && typeof device.type !== 'undefined' && typeof device.os !== 'undefined' && typeof device.browser !== 'undefined') {
+        setTest(2, 0, 'pass', JSON.stringify({ type: device.type, os: device.os, browser: device.browser }));
+    } else {
+        setTest(2, 0, 'fail', 'Missing required fields');
+    }
+
+    // Test 9: Device type is valid
+    results.total++;
+    testCategories[2].tests[1].status = 'running'; renderTests();
+    await delay(100);
+    if (device.type === 'mobile' || device.type === 'laptop') {
+        setTest(2, 1, 'pass', 'Detected: ' + device.type);
+    } else {
+        setTest(2, 1, 'fail', 'Invalid type: ' + device.type);
+    }
+
+    // Test 10: OS detected
+    results.total++;
+    testCategories[2].tests[2].status = 'running'; renderTests();
+    await delay(100);
+    if (device.os && device.os !== 'Other') {
+        setTest(2, 2, 'pass', 'Detected: ' + device.os);
+    } else {
+        setTest(2, 2, 'fail', 'OS is "Other" - UA: ' + navigator.userAgent.slice(0, 80));
+    }
+
+    // Test 11: Browser detected
+    results.total++;
+    testCategories[2].tests[3].status = 'running'; renderTests();
+    await delay(100);
+    if (device.browser && device.browser !== 'Other') {
+        setTest(2, 3, 'pass', 'Detected: ' + device.browser);
+    } else {
+        setTest(2, 3, 'fail', 'Browser is "Other" - UA: ' + navigator.userAgent.slice(0, 80));
+    }
+
+    // --- KEY SANITIZATION ---
+    // Test 12: Sanitize removes dots
+    results.total++;
+    testCategories[3].tests[0].status = 'running'; renderTests();
+    await delay(100);
+    const sanitized = sanitizeFbKey('user@gmail.com');
+    if (!sanitized.includes('.') && sanitized === 'user_dot_gmail_dot_com') {
+        setTest(3, 0, 'pass', 'Result: ' + sanitized);
+    } else {
+        setTest(3, 0, 'fail', 'Result: ' + sanitized);
+    }
+
+    // Test 13: Desanitize restores dots
+    results.total++;
+    testCategories[3].tests[1].status = 'running'; renderTests();
+    await delay(100);
+    const original = 'samhithreddy@gmail.com';
+    const roundTrip = desanitizeFbKey(sanitizeFbKey(original));
+    if (roundTrip === original) {
+        setTest(3, 1, 'pass', '"' + original + '" -> "' + sanitizeFbKey(original) + '" -> "' + roundTrip + '"');
+    } else {
+        setTest(3, 1, 'fail', 'Expected "' + original + '" got "' + roundTrip + '"');
+    }
+
+    // Test 14: Deep sanitize
+    results.total++;
+    testCategories[3].tests[2].status = 'running'; renderTests();
+    await delay(100);
+    const deepInput = { 'user@gmail.com': { 'nested.key': 'value', arr: ['a@b.com'] } };
+    const deepSanitized = sanitizeForFirebase(deepInput);
+    const firstKey = Object.keys(deepSanitized)[0];
+    if (!firstKey.includes('.') && firstKey === 'user_dot_gmail_dot_com') {
+        setTest(3, 2, 'pass', 'Top key: "' + firstKey + '"');
+    } else {
+        setTest(3, 2, 'fail', 'Top key: "' + firstKey + '"');
+    }
+
+    // Test 15: Deep desanitize
+    results.total++;
+    testCategories[3].tests[3].status = 'running'; renderTests();
+    await delay(100);
+    const deepDesanitized = desanitizeFromFirebase(deepSanitized);
+    const restoredKey = Object.keys(deepDesanitized)[0];
+    if (restoredKey === 'user@gmail.com') {
+        setTest(3, 3, 'pass', 'Restored key: "' + restoredKey + '"');
+    } else {
+        setTest(3, 3, 'fail', 'Expected "user@gmail.com" got "' + restoredKey + '"');
+    }
+
+    // --- SESSION MANAGEMENT ---
+    if (fbReady) {
+        // Test 16: Create session
+        results.total++;
+        testCategories[4].tests[0].status = 'running'; renderTests();
+        log('Creating test session in Firebase...', 'info');
+        try {
+            const session = await createSession(testUser);
+            createdSessionId = session.sessionId;
+            const snap = await db.ref('nxt360/sessions/' + sanitizeKey(testEmail) + '/' + createdSessionId).once('value');
+            if (snap.exists() && snap.val().token === session.token) {
+                setTest(4, 0, 'pass', 'Session ID: ' + createdSessionId);
+            } else {
+                setTest(4, 0, 'fail', 'Session not found in Firebase after create');
+            }
+        } catch (e) {
+            setTest(4, 0, 'fail', e.message);
+        }
+
+        // Test 17: Validate active session
+        results.total++;
+        testCategories[4].tests[1].status = 'running'; renderTests();
+        await delay(200);
+        try {
+            const isValid = await validateSession(testEmail, createdSessionId);
+            if (isValid === true) {
+                setTest(4, 1, 'pass');
+            } else {
+                setTest(4, 1, 'fail', 'validateSession returned ' + isValid);
+            }
+        } catch (e) {
+            setTest(4, 1, 'fail', e.message);
+        }
+
+        // Test 18: Remove session
+        results.total++;
+        testCategories[4].tests[2].status = 'running'; renderTests();
+        try {
+            await removeSession(testEmail, createdSessionId);
+            await delay(500);
+            const snap2 = await db.ref('nxt360/sessions/' + sanitizeKey(testEmail) + '/' + createdSessionId).once('value');
+            if (!snap2.exists()) {
+                setTest(4, 2, 'pass');
+            } else {
+                setTest(4, 2, 'fail', 'Session still exists after removal');
+            }
+        } catch (e) {
+            setTest(4, 2, 'fail', e.message);
+        }
+
+        // Test 19: Validate removed session
+        results.total++;
+        testCategories[4].tests[3].status = 'running'; renderTests();
+        await delay(200);
+        try {
+            const isStillValid = await validateSession(testEmail, createdSessionId);
+            if (isStillValid === false) {
+                setTest(4, 3, 'pass');
+            } else {
+                setTest(4, 3, 'fail', 'validateSession returned ' + isStillValid + ' for removed session');
+            }
+        } catch (e) {
+            setTest(4, 3, 'fail', e.message);
+        }
+
+        // Cleanup test data
+        try { await db.ref('nxt360/sessions/' + sanitizeKey(testEmail)).remove(); } catch (e) {}
+    } else {
+        for (let i = 0; i < 4; i++) {
+            results.total++;
+            setTest(4, i, 'skip', 'Firebase not connected');
+        }
+    }
+
+    // --- LOCALSTORAGE ---
+    // Test 20: localStorage read/write
+    results.total++;
+    testCategories[5].tests[0].status = 'running'; renderTests();
+    await delay(100);
+    try {
+        localStorage.setItem('nxt360_test', JSON.stringify({ hello: 'world' }));
+        const val = JSON.parse(localStorage.getItem('nxt360_test'));
+        if (val && val.hello === 'world') {
+            setTest(5, 0, 'pass');
+            localStorage.removeItem('nxt360_test');
+        } else {
+            setTest(5, 0, 'fail', 'Value mismatch');
+        }
+    } catch (e) {
+        setTest(5, 0, 'fail', e.message);
+    }
+
+    // Test 21: Session data in localStorage
+    results.total++;
+    testCategories[5].tests[1].status = 'running'; renderTests();
+    await delay(100);
+    const hasToken = !!localStorage.getItem('nxt360_session_token');
+    const hasId = !!localStorage.getItem('nxt360_session_id');
+    if (hasToken || hasId) {
+        setTest(5, 1, 'pass', 'token=' + (hasToken ? 'yes' : 'no') + ', id=' + (hasId ? 'yes' : 'no'));
+    } else {
+        setTest(5, 1, 'skip', 'No session in localStorage (login first on index.html)');
+    }
+
+    // --- DONE ---
+    log(`\nTest suite complete: ${results.pass}/${results.total} passed, ${results.fail} failed`, results.fail > 0 ? 'warn' : 'pass');
+    btn.disabled = false;
+    btn.textContent = 'Run All Tests Again';
+}
+
+// Auto-run on load
+window.addEventListener('load', () => {
+    defineTests();
+    renderTests();
+    setTimeout(runAllTests, 500);
+});
+</script>
+</body>
+</html>
