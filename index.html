@@ -8,6 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta http-equiv="Permissions-Policy" content="camera=self, microphone=self">
+    <meta name="version" content="2.0.0-sessions">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -1248,6 +1249,7 @@ async function forceLogout() {
 
 // ============ DASHBOARD INIT ============
 let loginSelfiePending = false;
+let clockInterval = null;
 
 function getUserPhoto(email) {
     const photos = {
@@ -1269,7 +1271,8 @@ function initDashboard(freshLogin) {
     document.getElementById('userName').textContent = currentUser.name;
     document.getElementById('userRole').textContent = currentUser.role;
     updateClock();
-    setInterval(updateClock, 1000);
+    if (clockInterval) clearInterval(clockInterval);
+    clockInterval = setInterval(updateClock, 1000);
     renderTabs();
     renderStats();
     renderToday();
@@ -2579,8 +2582,9 @@ function closeSelfieModal() {
     if (wasLogout && selfieCaptured) { forceLogout(); }
     if (!wasLogout && !selfieCaptured) {
         loginSelfiePending = false;
-        currentUser = null;
-        localStorage.removeItem('nxt360_session');
+    currentUser = null;
+    if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
+    localStorage.removeItem('nxt360_session');
         document.getElementById('loginPage').style.display = 'flex';
         document.getElementById('dashboardPage').style.display = 'none';
     }
