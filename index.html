@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <style>
         :root {
             --primary: #10b981;
@@ -275,6 +276,27 @@
         .settings-card .s-field input:focus, .settings-card .s-field select:focus { border-color: var(--primary); }
         .settings-card .s-actions { display: flex; gap: 8px; margin-top: 12px; }
         .settings-card .s-delete { margin-left: auto; }
+        /* Sessions Panel */
+        .sessions-table { width: 100%; border-collapse: collapse; margin-top: 12px; background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+        .sessions-table th, .sessions-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .sessions-table th { background: var(--primary-light); font-weight: 600; color: var(--text); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sessions-table tr:hover { background: #f9fafb; }
+        .sessions-table .device-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .sessions-table .device-badge.mobile { background: #dbeafe; color: #1d4ed8; }
+        .sessions-table .device-badge.laptop { background: #d1fae5; color: #059669; }
+        .sessions-table .session-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .sessions-table .session-status.active { background: #d1fae5; color: #059669; }
+        .sessions-table .session-status.current { background: #fef3c7; color: #b45309; }
+        .sessions-table .revoke-btn { padding: 4px 10px; border: none; border-radius: 6px; background: var(--danger); color: white; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+        .sessions-table .revoke-btn:hover { background: #dc2626; }
+        .sessions-table .revoke-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+        .sessions-empty { padding: 32px; text-align: center; color: var(--text-light); font-size: 13px; }
+        .sessions-user-group { margin-bottom: 20px; }
+        .sessions-user-header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--bg); border-radius: 10px 10px 0 0; border: 2px solid var(--border); border-bottom: none; }
+        .sessions-user-header .user-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .sessions-user-header .user-name { font-weight: 700; font-size: 14px; }
+        .sessions-user-header .user-role { font-size: 11px; color: var(--text-light); margin-left: auto; }
+        .sessions-user-header .session-count { font-size: 11px; background: var(--primary); color: white; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
         /* Selfie Modal */
         .selfie-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 600; align-items: center; justify-content: center; }
         .selfie-modal.open ~ * { pointer-events: none; }
@@ -449,6 +471,8 @@
             .leave-form .form-group { min-width: 100%; }
             .payroll-header { flex-direction: column; align-items: stretch; }
             .bday-widget { flex-direction: column; text-align: center; padding: 16px; }
+            .sessions-table { min-width: 500px; }
+            .sessions-table th, .sessions-table td { padding: 8px 6px; font-size: 11px; }
         }
 
         @media (max-width: 480px) {
@@ -697,6 +721,13 @@
                 <button class="btn btn-primary btn-sm" onclick="addNewMember()">➕ Add Member</button>
             </div>
             <div id="settingsContent"></div>
+            <div class="section-header" style="margin-top:32px">
+                <h3>🔐 Active Sessions</h3>
+                <button class="btn btn-secondary btn-sm" onclick="renderActiveSessions()">🔄 Refresh</button>
+            </div>
+            <div id="sessionsContent">
+                <p style="color:var(--text-light);font-size:13px">Loading sessions...</p>
+            </div>
         </div>
 
         <div class="section hidden" id="panelApprovals">
@@ -821,6 +852,7 @@ function todayKey() {
 
 // ============ FIREBASE CROSS-DEVICE SYNC ============
 let db = null;
+let auth = null;
 let fbReady = false;
 const FB_KEYS = ['records', 'leaves', 'selfies', 'notifications', 'chat', 'profiles', 'salary', 'tasks', 'workUpdates'];
 
@@ -842,6 +874,7 @@ function initFirebaseSync() {
         }
         firebase.initializeApp(FIREBASE_CONFIG);
         db = firebase.database();
+        auth = firebase.auth();
         fbReady = true;
         FB_KEYS.forEach(k => {
             db.ref('nxt360/' + k).on('value', snap => {
@@ -859,10 +892,163 @@ function initFirebaseSync() {
     }
 }
 initFirebaseSync();
+if (auth) { migrateUsersToFirebaseAuth(); }
 
 // ============ ACCESS CONTROL ============
 function canSeeAll() { return currentUser && (currentUser.role === 'CEO' || currentUser.role === 'CTO'); }
 function canSeeUser(email) { return canSeeAll() || currentUser.email === email; }
+
+// ============ SESSION TOKENS & DEVICE DETECTION ============
+function generateToken() {
+    const arr = new Uint8Array(32);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function detectDevice() {
+    const ua = navigator.userAgent;
+    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua) || window.innerWidth < 768;
+    let os = 'Other';
+    if (/Windows/i.test(ua)) os = 'Windows';
+    else if (/Mac OS/i.test(ua)) os = 'macOS';
+    else if (/Android/i.test(ua)) os = 'Android';
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+    else if (/Linux/i.test(ua)) os = 'Linux';
+    let browser = 'Other';
+    if (/Edg\//i.test(ua)) browser = 'Edge';
+    else if (/Chrome/i.test(ua) && !/Edg\//i.test(ua)) browser = 'Chrome';
+    else if (/Firefox/i.test(ua)) browser = 'Firefox';
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+    return {
+        type: isMobile ? 'mobile' : 'laptop',
+        os: os,
+        browser: browser,
+        screen: screen.width + 'x' + screen.height,
+        userAgent: ua
+    };
+}
+
+async function createSession(user) {
+    const token = generateToken();
+    const device = detectDevice();
+    const sessionId = 'sess_' + Date.now() + '_' + token.slice(0, 8);
+    const sessionData = {
+        token: token,
+        sessionId: sessionId,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        device: device,
+        loginTime: new Date().toISOString(),
+        lastActive: new Date().toISOString(),
+        status: 'active'
+    };
+    if (fbReady && db) {
+        try {
+            await db.ref('nxt360/sessions/' + sanitizeKey(user.email) + '/' + sessionId).set(sessionData);
+        } catch (e) {
+            console.error('Session create error:', e);
+        }
+    }
+    localStorage.setItem('nxt360_session_token', token);
+    localStorage.setItem('nxt360_session_id', sessionId);
+    return sessionData;
+}
+
+async function validateSession(email, sessionId) {
+    if (!fbReady || !db) return true;
+    try {
+        const snap = await db.ref('nxt360/sessions/' + sanitizeKey(email) + '/' + sessionId).once('value');
+        if (snap.exists()) {
+            const sess = snap.val();
+            if (sess.status === 'active') {
+                db.ref('nxt360/sessions/' + sanitizeKey(email) + '/' + sessionId + '/lastActive').set(new Date().toISOString());
+                return true;
+            }
+        }
+        return false;
+    } catch (e) {
+        console.error('Session validate error:', e);
+        return true;
+    }
+}
+
+async function removeSession(email, sessionId) {
+    if (fbReady && db) {
+        try {
+            await db.ref('nxt360/sessions/' + sanitizeKey(email) + '/' + sessionId + '/status').set('revoked');
+            await db.ref('nxt360/sessions/' + sanitizeKey(email) + '/' + sessionId).remove();
+        } catch (e) {
+            console.error('Session remove error:', e);
+        }
+    }
+}
+
+async function removeAllUserSessions(email) {
+    if (fbReady && db) {
+        try {
+            await db.ref('nxt360/sessions/' + sanitizeKey(email)).remove();
+        } catch (e) {
+            console.error('Remove all sessions error:', e);
+        }
+    }
+}
+
+function sanitizeKey(str) {
+    return str.replace(/[.#$[\]]/g, '_');
+}
+
+async function getActiveSessions(email) {
+    if (!fbReady || !db) return [];
+    try {
+        const snap = await db.ref('nxt360/sessions/' + sanitizeKey(email)).once('value');
+        const sessions = [];
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const s = child.val();
+                if (s.status === 'active') sessions.push(s);
+            });
+        }
+        return sessions;
+    } catch (e) {
+        console.error('Get sessions error:', e);
+        return [];
+    }
+}
+
+async function getAllActiveSessions() {
+    if (!fbReady || !db) return [];
+    try {
+        const users = USERS();
+        const allSessions = [];
+        for (const u of users) {
+            const userSessions = await getActiveSessions(u.email);
+            allSessions.push(...userSessions);
+        }
+        return allSessions;
+    } catch (e) {
+        console.error('Get all sessions error:', e);
+        return [];
+    }
+}
+
+// ============ FIREBASE AUTH MIGRATION ============
+async function migrateUsersToFirebaseAuth() {
+    if (!auth) return;
+    const users = USERS();
+    for (const u of users) {
+        try {
+            await auth.createUserWithEmailAndPassword(u.email, u.password + '_fb');
+            console.log('Created Firebase Auth user:', u.email);
+        } catch (e) {
+            if (e.code === 'auth/email-already-in-use') {
+                console.log('Firebase Auth user exists:', u.email);
+            } else {
+                console.warn('Firebase Auth migration skip:', u.email, e.message);
+            }
+        }
+    }
+}
 
 // ============ TABS CONFIG ============
 function getTabs() {
@@ -945,7 +1131,7 @@ function renderQuickLogin() {
     }).join('');
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim().toLowerCase();
     const pass = document.getElementById('loginPassword').value.trim();
@@ -958,6 +1144,32 @@ function handleLogin(e) {
     }
     currentUser = user;
     localStorage.setItem('nxt360_session', JSON.stringify(currentUser));
+    try {
+        if (auth) {
+            try {
+                await auth.signInWithEmailAndPassword(user.email, user.password + '_fb');
+            } catch (fbErr) {
+                if (fbErr.code === 'auth/user-not-found') {
+                    try {
+                        await auth.createUserWithEmailAndPassword(user.email, user.password + '_fb');
+                    } catch (createErr) {
+                        console.warn('Firebase Auth create failed:', createErr.message);
+                    }
+                } else if (fbErr.code === 'auth/wrong-password') {
+                    try {
+                        await auth.createUserWithEmailAndPassword(user.email, user.password + '_fb');
+                    } catch (createErr) {
+                        console.warn('Firebase Auth re-create failed:', createErr.message);
+                    }
+                } else {
+                    console.warn('Firebase Auth sign-in error:', fbErr.message);
+                }
+            }
+        }
+        await createSession(user);
+    } catch (e) {
+        console.error('Session creation error:', e);
+    }
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('dashboardPage').style.display = 'block';
     initDashboard(true);
@@ -973,7 +1185,7 @@ function handleLogout() {
     }
 }
 
-function forceLogout() {
+async function forceLogout() {
     stopSelfieStream();
     document.getElementById('selfieModal').classList.remove('open');
     const tk = todayKey();
@@ -990,8 +1202,17 @@ function forceLogout() {
             createNotification(u.email, 'employee_logout', `${currentUser.name} has logged out at ${logoutTime}`, { from: currentUser.name, fromRole: currentUser.role });
         });
     }
+    const sessionId = localStorage.getItem('nxt360_session_id');
+    if (sessionId && currentUser) {
+        await removeSession(currentUser.email, sessionId);
+    }
+    if (auth) {
+        try { await auth.signOut(); } catch (e) { console.warn('Firebase Auth signOut error:', e); }
+    }
     currentUser = null;
     localStorage.removeItem('nxt360_session');
+    localStorage.removeItem('nxt360_session_token');
+    localStorage.removeItem('nxt360_session_id');
     loginSelfiePending = false;
     selfieCaptured = false;
     document.getElementById('loginPage').style.display = 'flex';
@@ -1934,6 +2155,7 @@ function renderSettings() {
     });
     html += '</div>';
     document.getElementById('settingsContent').innerHTML = html;
+    renderActiveSessions();
 }
 
 function saveProfile(index) {
@@ -2003,12 +2225,20 @@ function deleteMember(index) {
     renderSettings();
 }
 
-function addNewMember() {
+async function addNewMember() {
     const users = USERS();
     const newName = 'New Member ' + (users.length + 1);
     const newEmail = 'member' + (users.length + 1) + '@gmail.com';
-    users.push({ name: newName, email: newEmail, password: 'password123', role: 'Employee' });
+    const newPassword = 'password123';
+    users.push({ name: newName, email: newEmail, password: newPassword, role: 'Employee' });
     setUsers(users);
+    if (auth) {
+        try {
+            await auth.createUserWithEmailAndPassword(newEmail, newPassword + '_fb');
+        } catch (e) {
+            console.warn('Firebase Auth create for new member failed:', e.message);
+        }
+    }
     const bd = getBirthdays();
     bd[newName] = { month: 1, day: 1 };
     setBirthdays(bd);
@@ -2034,6 +2264,73 @@ function updateBIRTHDAYSFromStorage() {
 }
 
 function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+// ============ ACTIVE SESSIONS (CEO/CTO) ============
+async function renderActiveSessions() {
+    const container = document.getElementById('sessionsContent');
+    if (!container) return;
+    container.innerHTML = '<p style="color:var(--text-light);font-size:13px">Loading sessions...</p>';
+    const users = USERS();
+    let html = '';
+    let hasAnySessions = false;
+    const currentSessionId = localStorage.getItem('nxt360_session_id');
+    for (const u of users) {
+        const sessions = await getActiveSessions(u.email);
+        if (sessions.length === 0) continue;
+        hasAnySessions = true;
+        const avColor = u.role === 'CEO' ? '#7c3aed' : u.role === 'CTO' ? '#2563eb' : '#10b981';
+        const initials = u.name.split(' ').map(w => w[0]).join('');
+        html += '<div class="sessions-user-group">';
+        html += '<div class="sessions-user-header">';
+        html += '<div class="user-dot" style="background:' + avColor + '"></div>';
+        html += '<span class="user-name">' + escapeHtml(u.name) + '</span>';
+        html += '<span class="session-count">' + sessions.length + ' active</span>';
+        html += '<span class="user-role">' + u.role + '</span>';
+        html += '</div>';
+        html += '<table class="sessions-table"><thead><tr>';
+        html += '<th>Device</th><th>OS</th><th>Browser</th><th>Screen</th><th>Login Time</th><th>Status</th><th>Action</th>';
+        html += '</tr></thead><tbody>';
+        sessions.sort((a, b) => new Date(b.loginTime) - new Date(a.loginTime));
+        for (const s of sessions) {
+            const isCurrentSession = s.sessionId === currentSessionId;
+            const deviceIcon = s.device && s.device.type === 'mobile' ? '📱' : '💻';
+            const deviceLabel = s.device ? s.device.type.charAt(0).toUpperCase() + s.device.type.slice(1) : 'Unknown';
+            const deviceClass = s.device && s.device.type === 'mobile' ? 'mobile' : 'laptop';
+            const os = s.device ? s.device.os : 'Unknown';
+            const browser = s.device ? s.device.browser : 'Unknown';
+            const screen = s.device ? s.device.screen : 'Unknown';
+            const loginTime = new Date(s.loginTime).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const statusClass = isCurrentSession ? 'current' : 'active';
+            const statusLabel = isCurrentSession ? '🟢 Current' : '✅ Active';
+            html += '<tr>';
+            html += '<td><span class="device-badge ' + deviceClass + '">' + deviceIcon + ' ' + deviceLabel + '</span></td>';
+            html += '<td>' + escapeHtml(os) + '</td>';
+            html += '<td>' + escapeHtml(browser) + '</td>';
+            html += '<td>' + escapeHtml(screen) + '</td>';
+            html += '<td>' + loginTime + '</td>';
+            html += '<td><span class="session-status ' + statusClass + '">' + statusLabel + '</span></td>';
+            html += '<td>';
+            if (isCurrentSession) {
+                html += '<button class="revoke-btn" disabled>This Device</button>';
+            } else {
+                html += '<button class="revoke-btn" onclick="revokeSession(\'' + escapeHtml(u.email) + '\', \'' + s.sessionId + '\', \'' + escapeHtml(u.name) + '\')">Revoke</button>';
+            }
+            html += '</td></tr>';
+        }
+        html += '</tbody></table></div>';
+    }
+    if (!hasAnySessions) {
+        html = '<div class="sessions-empty">🔐 No active sessions found.<br>Sessions will appear here when users log in from devices.</div>';
+    }
+    container.innerHTML = html;
+}
+
+async function revokeSession(email, sessionId, userName) {
+    if (!confirm('Revoke session for ' + userName + '? They will be logged out on that device.')) return;
+    await removeSession(email, sessionId);
+    renderActiveSessions();
+    showToast('Session Revoked', userName + '\'s session has been terminated.');
+}
 
 // ============ NOTIFICATION HELPERS ============
 function createNotification(targetEmail, type, message, extra) {
@@ -2908,10 +3205,22 @@ function populatePayrollMonth() {
 }
 
 // ============ AUTO-RESTORE SESSION ============
-(function restoreSession() {
+(async function restoreSession() {
     if (currentUser) {
         const validUser = USERS().find(u => u.email === currentUser.email && u.password === currentUser.password);
         if (validUser) {
+            const sessionId = localStorage.getItem('nxt360_session_id');
+            const token = localStorage.getItem('nxt360_session_token');
+            if (sessionId && token) {
+                const valid = await validateSession(validUser.email, sessionId);
+                if (!valid) {
+                    currentUser = null;
+                    localStorage.removeItem('nxt360_session');
+                    localStorage.removeItem('nxt360_session_token');
+                    localStorage.removeItem('nxt360_session_id');
+                    return;
+                }
+            }
             currentUser = validUser;
             localStorage.setItem('nxt360_session', JSON.stringify(currentUser));
             document.getElementById('loginPage').style.display = 'none';
@@ -2920,6 +3229,8 @@ function populatePayrollMonth() {
         } else {
             currentUser = null;
             localStorage.removeItem('nxt360_session');
+            localStorage.removeItem('nxt360_session_token');
+            localStorage.removeItem('nxt360_session_id');
         }
     }
 })();
