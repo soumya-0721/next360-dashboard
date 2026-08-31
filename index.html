@@ -1058,8 +1058,9 @@ async function getAllActiveSessions() {
 }
 
 // ============ FIREBASE AUTH MIGRATION ============
+let authAvailable = true;
 async function migrateUsersToFirebaseAuth() {
-    if (!auth) return;
+    if (!auth || !authAvailable) return;
     const users = USERS();
     for (const u of users) {
         try {
@@ -1068,6 +1069,10 @@ async function migrateUsersToFirebaseAuth() {
         } catch (e) {
             if (e.code === 'auth/email-already-in-use') {
                 console.log('Firebase Auth user exists:', u.email);
+            } else if (e.code === 'auth/configuration-not-found' || e.code === 'auth/operation-not-allowed') {
+                console.log('Firebase Auth not enabled in console. Login still works via localStorage. To enable: Firebase Console → Authentication → Email/Password → Enable');
+                authAvailable = false;
+                break;
             } else {
                 console.warn('Firebase Auth migration skip:', u.email, e.message);
             }
@@ -1170,7 +1175,7 @@ async function handleLogin(e) {
     currentUser = user;
     localStorage.setItem('nxt360_session', JSON.stringify(currentUser));
     try {
-        if (auth) {
+        if (auth && authAvailable) {
             try {
                 await auth.signInWithEmailAndPassword(user.email, user.password + '_fb');
             } catch (fbErr) {
@@ -1178,14 +1183,24 @@ async function handleLogin(e) {
                     try {
                         await auth.createUserWithEmailAndPassword(user.email, user.password + '_fb');
                     } catch (createErr) {
-                        console.warn('Firebase Auth create failed:', createErr.message);
+                        if (createErr.code === 'auth/configuration-not-found' || createErr.code === 'auth/operation-not-allowed') {
+                            authAvailable = false;
+                        } else {
+                            console.warn('Firebase Auth create failed:', createErr.message);
+                        }
                     }
                 } else if (fbErr.code === 'auth/wrong-password') {
                     try {
                         await auth.createUserWithEmailAndPassword(user.email, user.password + '_fb');
                     } catch (createErr) {
-                        console.warn('Firebase Auth re-create failed:', createErr.message);
+                        if (createErr.code === 'auth/configuration-not-found' || createErr.code === 'auth/operation-not-allowed') {
+                            authAvailable = false;
+                        } else {
+                            console.warn('Firebase Auth re-create failed:', createErr.message);
+                        }
                     }
+                } else if (fbErr.code === 'auth/configuration-not-found' || fbErr.code === 'auth/operation-not-allowed') {
+                    authAvailable = false;
                 } else {
                     console.warn('Firebase Auth sign-in error:', fbErr.message);
                 }
@@ -2266,11 +2281,15 @@ async function addNewMember() {
     const newPassword = 'password123';
     users.push({ name: newName, email: newEmail, password: newPassword, role: 'Employee' });
     setUsers(users);
-    if (auth) {
+    if (auth && authAvailable) {
         try {
             await auth.createUserWithEmailAndPassword(newEmail, newPassword + '_fb');
         } catch (e) {
-            console.warn('Firebase Auth create for new member failed:', e.message);
+            if (e.code === 'auth/configuration-not-found' || e.code === 'auth/operation-not-allowed') {
+                authAvailable = false;
+            } else {
+                console.warn('Firebase Auth create for new member failed:', e.message);
+            }
         }
     }
     const bd = getBirthdays();
